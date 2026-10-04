@@ -1,0 +1,2443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial: Panel CRM Inmobiliario con IA y Base de Datos Real — V001</title>
+<style>
+/* ============ VARIABLES ============ */
+:root{
+  --bg:#0a0e1a;
+  --card:#0f172a;
+  --soft:#1e3a5f;
+  --blue:#2563EB;
+  --green:#16A34A;
+  --muted:#94a3b8;
+  --text:#e2e8f0;
+  --heading:#f1f5f9;
+  --border:#1e3a5f;
+  --sticky:rgba(10,14,26,.94);
+  --code:#060a13;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+body.light{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --soft:#dbe6f5;
+  --muted:#5b6b83;
+  --text:#1e293b;
+  --heading:#0f172a;
+  --border:#cbd8ea;
+  --sticky:rgba(244,247,251,.94);
+  --code:#eef3fa;
+  --shadow:0 10px 26px rgba(15,23,42,.10);
+}
+
+/* ============ BASE ============ */
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:1rem;
+  line-height:1.7;
+  -webkit-text-size-adjust:100%;
+  transition:background .25s ease,color .25s ease;
+}
+h1,h2,h3,h4{color:var(--heading);line-height:1.28;margin:0 0 .5em;}
+h1{font-size:1.5rem;font-weight:800;letter-spacing:-.01em;}
+h2{font-size:1.32rem;font-weight:800;margin-top:1.6em;padding-bottom:.35em;border-bottom:2px solid var(--border);}
+h3{font-size:1.08rem;font-weight:700;margin-top:1.5em;color:var(--blue);}
+body.light h3{color:#1d4ed8;}
+h4{font-size:.98rem;font-weight:700;margin-top:1.1em;}
+p{margin:0 0 1em;}
+ul,ol{margin:0 0 1em;padding-left:1.3em;}
+li{margin-bottom:.4em;}
+a{color:var(--blue);text-decoration:none;border-bottom:1px dotted currentColor;word-break:break-word;}
+a:hover{color:var(--green);}
+strong{color:var(--heading);}
+code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--soft);
+  color:var(--heading);
+  padding:.1em .42em;
+  border-radius:5px;
+  font-size:.87em;
+}
+hr{border:0;border-top:1px solid var(--border);margin:1.8em 0;}
+
+/* ============ BARRA DE PROGRESO ============ */
+.progress-bar{
+  position:fixed;top:0;left:0;height:3px;width:0%;
+  background:linear-gradient(90deg,var(--blue),var(--green));
+  z-index:100;transition:width .12s linear;
+}
+
+/* ============ TOPBAR ============ */
+.topbar{
+  max-width:1000px;margin:0 auto;
+  padding:20px 16px 12px;
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+}
+.brand{display:flex;gap:12px;align-items:center;min-width:0;}
+.logo{
+  flex:0 0 auto;
+  display:grid;place-items:center;
+  width:46px;height:46px;border-radius:12px;
+  background:linear-gradient(135deg,var(--blue),var(--green));
+  color:#fff;font-weight:900;font-size:.82rem;letter-spacing:.5px;
+  box-shadow:0 6px 18px rgba(37,99,235,.35);
+}
+.brand h1{font-size:1.12rem;margin:0;}
+.sub{margin:2px 0 0;font-size:.8rem;color:var(--muted);line-height:1.35;}
+.toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.toolbar input[type=search]{
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:9px;padding:8px 12px;font-size:.84rem;min-width:190px;font-family:inherit;
+  outline:none;transition:border-color .2s;
+}
+.toolbar input[type=search]:focus{border-color:var(--blue);}
+.toolbar button{
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:9px;padding:8px 11px;font-size:.84rem;font-weight:700;font-family:inherit;
+  cursor:pointer;transition:.18s;line-height:1;
+}
+.toolbar button:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px);}
+.toolbar button:active{transform:translateY(0);}
+.search-info{flex:1 1 100%;font-size:.78rem;color:var(--muted);min-height:0;}
+.search-info:not(:empty){padding-top:2px;}
+
+/* ============ TABS ============ */
+.tabs{
+  position:sticky;top:0;z-index:40;
+  display:flex;gap:7px;overflow-x:auto;
+  padding:11px 16px;
+  background:var(--sticky);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  scrollbar-width:thin;
+}
+.tabs::-webkit-scrollbar{height:5px;}
+.tabs::-webkit-scrollbar-thumb{background:var(--soft);border-radius:3px;}
+.tab{
+  flex:0 0 auto;
+  padding:9px 15px;border-radius:999px;
+  border:1px solid var(--border);background:var(--card);color:var(--muted);
+  font-weight:700;font-size:.76rem;letter-spacing:.06em;font-family:inherit;
+  cursor:pointer;transition:.18s;white-space:nowrap;
+}
+.tab:hover{color:var(--text);border-color:var(--blue);}
+.tab.active{
+  background:var(--blue);border-color:var(--blue);color:#fff;
+  box-shadow:0 0 0 3px rgba(37,99,235,.22);
+}
+
+/* ============ PANELES ============ */
+.panel{display:none;max-width:1000px;margin:0 auto;padding:22px 16px 70px;}
+.panel.active{display:block;animation:fadeUp .32s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ============ SVG HERO ============ */
+.hero-svg-mount{
+  width:100%;
+  margin:6px 0 14px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  background:#0a0e1a;
+  line-height:0;
+}
+.hero-svg-mount svg{display:block;width:100%;height:auto;}
+.hero-svg-mount img{display:block;width:100%;height:auto;}
+.svg-caption{
+  font-size:.78rem;color:var(--muted);text-align:center;
+  margin:-6px 0 20px;font-style:italic;line-height:1.5;
+}
+
+/* ============ COMPONENTES ============ */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;margin:14px 0;
+}
+.card.accent{border-left:4px solid var(--blue);}
+.card.ok{border-left:4px solid var(--green);}
+.card.warn{border-left:4px solid #f59e0b;}
+.card.bad{border-left:4px solid #ef4444;}
+
+.badge{
+  display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.09em;
+  text-transform:uppercase;padding:4px 10px;border-radius:999px;
+  background:var(--soft);color:var(--text);margin-bottom:10px;
+}
+.badge.blue{background:var(--blue);color:#fff;}
+.badge.green{background:var(--green);color:#fff;}
+
+.grid2{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:720px){.grid2{grid-template-columns:1fr 1fr;}}
+
+.steps{counter-reset:s;list-style:none;padding:0;margin:0;}
+.steps > li{
+  counter-increment:s;position:relative;
+  padding:14px 16px 14px 54px;margin:0 0 12px;
+  background:var(--card);border:1px solid var(--border);border-radius:13px;
+}
+.steps > li::before{
+  content:counter(s);
+  position:absolute;left:14px;top:14px;
+  width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--blue);color:#fff;font-weight:800;font-size:.82rem;
+}
+.steps > li .why{display:block;margin-top:7px;font-size:.85rem;color:var(--muted);border-left:2px solid var(--green);padding-left:10px;}
+.steps > li .expect{display:block;margin-top:7px;font-size:.85rem;color:var(--green);font-weight:600;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.86rem;display:block;overflow-x:auto;}
+thead th{
+  background:var(--soft);color:var(--heading);
+  text-align:left;padding:10px 12px;font-weight:800;font-size:.78rem;
+  letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--border);
+}
+tbody td{padding:10px 12px;border:1px solid var(--border);vertical-align:top;}
+tbody tr:nth-child(even){background:rgba(30,58,95,.16);}
+body.light tbody tr:nth-child(even){background:#f1f6fd;}
+
+pre{
+  background:var(--code);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;overflow-x:auto;font-size:.79rem;line-height:1.6;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:var(--text);white-space:pre;margin:0;
+}
+.copy-wrap{position:relative;margin:14px 0;}
+.copyBtn{
+  position:absolute;top:9px;right:9px;z-index:5;
+  background:var(--blue);color:#fff;border:0;border-radius:8px;
+  padding:6px 12px;font-size:.7rem;font-weight:800;letter-spacing:.07em;
+  cursor:pointer;font-family:inherit;transition:.18s;opacity:.92;
+}
+.copyBtn:hover{background:var(--green);opacity:1;}
+.copyBtn.ok{background:var(--green);}
+
+details{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:0;margin:11px 0;overflow:hidden;
+}
+details summary{
+  cursor:pointer;padding:13px 16px;font-weight:700;color:var(--heading);
+  list-style:none;position:relative;padding-right:44px;font-size:.94rem;
+}
+details summary::-webkit-details-marker{display:none;}
+details summary::after{
+  content:"+";position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  color:var(--blue);font-weight:900;font-size:1.15rem;transition:.2s;
+}
+details[open] summary::after{content:"−";}
+details[open] summary{border-bottom:1px solid var(--border);}
+details .details-body{padding:14px 16px;font-size:.92rem;}
+
+.checklist{list-style:none;padding:0;margin:10px 0;}
+.checklist li{
+  display:flex;gap:11px;align-items:flex-start;
+  padding:9px 12px;border:1px solid var(--border);border-radius:11px;
+  background:var(--card);margin-bottom:8px;font-size:.9rem;
+}
+.checklist input[type=checkbox]{
+  flex:0 0 auto;width:19px;height:19px;margin-top:3px;
+  accent-color:var(--green);cursor:pointer;
+}
+.checklist label{cursor:pointer;flex:1;}
+.ck-progress{font-size:.84rem;color:var(--muted);font-weight:700;margin:6px 0 14px;}
+
+.note{
+  background:var(--card);border:1px dashed var(--blue);border-radius:12px;
+  padding:13px 16px;margin:14px 0;font-size:.9rem;
+}
+.note.green{border-color:var(--green);}
+.note.red{border-color:#ef4444;}
+.note.amber{border-color:#f59e0b;}
+
+.kbd{
+  display:inline-block;background:var(--soft);border:1px solid var(--border);
+  border-radius:6px;padding:1px 7px;font-size:.78rem;font-weight:700;
+  font-family:ui-monospace,monospace;
+}
+
+.btn-inline{
+  display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:9px;
+  padding:9px 16px;font-weight:800;font-size:.82rem;cursor:pointer;
+  font-family:inherit;letter-spacing:.04em;transition:.18s;margin:4px 6px 4px 0;
+}
+.btn-inline:hover{background:var(--green);}
+.btn-inline.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue);}
+.btn-inline.ghost:hover{background:var(--blue);color:#fff;}
+
+.flow{
+  background:var(--code);border:1px solid var(--border);border-radius:12px;
+  padding:14px;overflow-x:auto;font-family:ui-monospace,monospace;
+  font-size:.74rem;line-height:1.45;color:var(--text);white-space:pre;
+}
+.flow .hl{color:var(--green);font-weight:700;}
+
+/* ============ CRÉDITOS ============ */
+.credit-name{
+  font-size:clamp(2rem,7vw,3.2rem);
+  font-weight:900;
+  letter-spacing:-.02em;
+  color:var(--heading);
+  margin:.1em 0 .05em;
+  line-height:1.1;
+}
+.credit-role{
+  font-size:1rem;font-weight:700;color:var(--blue);
+  letter-spacing:.1em;text-transform:uppercase;margin:0 0 18px;
+}
+.credit-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:20px;box-shadow:var(--shadow);
+}
+.meta-row{
+  display:flex;flex-wrap:wrap;gap:8px 22px;
+  font-size:.88rem;color:var(--muted);margin-top:8px;
+}
+.meta-row b{color:var(--text);font-weight:700;}
+
+/* ============ PROMPTS ============ */
+.promptIntro{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;margin:14px 0;
+}
+.promptIndex{
+  list-style:none;padding:0;margin:14px 0 26px;
+  display:grid;grid-template-columns:1fr;gap:8px;
+}
+@media(min-width:640px){.promptIndex{grid-template-columns:1fr 1fr;}}
+.promptIndex a{
+  display:block;
+  padding:12px 15px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:11px;
+  color:var(--text);
+  font-weight:700;
+  font-size:.87rem;
+  text-decoration:none;
+  border-bottom:1px solid var(--border);
+  transition:.18s;
+  line-height:1.4;
+}
+.promptIndex a:hover{
+  border-color:var(--blue);
+  color:var(--blue);
+  transform:translateX(4px);
+}
+.promptIndex a::before{
+  content:"→ ";
+  color:var(--blue);
+  font-weight:900;
+  margin-right:4px;
+}
+
+.promptBox{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px 20px;
+  margin:20px 0;
+  scroll-margin-top:78px;
+  box-shadow:var(--shadow);
+}
+.promptBox .promptNum{
+  display:inline-block;
+  font-size:.68rem;font-weight:800;letter-spacing:.1em;
+  background:var(--blue);color:#fff;
+  padding:3px 10px;border-radius:999px;
+  margin-bottom:8px;
+}
+.promptBox h3{
+  margin:0 0 12px;
+  color:var(--heading);
+  font-size:1.1rem;
+  line-height:1.35;
+}
+.promptMeta{
+  font-size:.87rem;
+  color:var(--muted);
+  margin:0 0 8px;
+  line-height:1.55;
+}
+.promptMeta b{color:var(--text);font-weight:700;}
+.promptBody{
+  background:var(--code);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.8rem;
+  line-height:1.6;
+  color:var(--text);
+  white-space:pre;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  margin:12px 0;
+}
+.promptBox .copyBtn{
+  position:static;
+  display:inline-block;
+  min-height:44px;
+  min-width:140px;
+  padding:12px 24px;
+  font-size:.78rem;
+  letter-spacing:.09em;
+  background:var(--blue);
+  color:#fff;
+  border:0;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:800;
+  font-family:inherit;
+  transition:.18s;
+  opacity:1;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.promptBox .copyBtn:hover{background:var(--green);}
+.promptBox .copyBtn:active{transform:scale(.98);}
+.promptBox .copyBtn.done{background:var(--green) !important;color:#fff !important;}
+.promptVariantLabel{
+  font-size:.82rem;font-weight:700;color:var(--green);
+  margin:14px 0 6px;
+}
+
+/* ============ VOLVER ARRIBA ============ */
+.to-top{
+  position:fixed;right:16px;bottom:18px;z-index:60;
+  width:46px;height:46px;border-radius:50%;
+  background:var(--blue);color:#fff;border:0;font-size:1.25rem;
+  cursor:pointer;box-shadow:0 8px 22px rgba(37,99,235,.42);
+  opacity:0;pointer-events:none;transition:.25s;
+}
+.to-top.show{opacity:1;pointer-events:auto;}
+.to-top:hover{background:var(--green);}
+
+/* ============ AVISO IMPRESIÓN ============ */
+#printNotice{
+  position:fixed;left:50%;bottom:78px;transform:translateX(-50%);
+  z-index:70;max-width:92vw;
+  background:#f59e0b;color:#1a1200;font-weight:700;font-size:.84rem;
+  padding:11px 16px;border-radius:11px;box-shadow:0 8px 26px rgba(0,0,0,.4);
+}
+
+/* ============ RESALTADO DE BÚSQUEDA ============ */
+mark.search-hl{background:#fde047;color:#111;border-radius:3px;padding:0 2px;}
+
+/* ============ IMPRESIÓN / PDF ============ */
+@media print{
+  @page{size:A4 portrait;margin:14mm 12mm;}
+
+  html,body{
+    background:#fff !important;color:#000 !important;
+    padding:0 !important;margin:0 !important;
+    font-size:11pt !important;line-height:1.45 !important;
+  }
+  .toolbar,.tabs,.to-top,.copyBtn,.progress-bar,nav,.search-info,#printNotice{
+    display:none !important;
+  }
+  .search-hl{background:transparent !important;color:inherit !important;padding:0 !important;}
+  .topbar{padding:0 0 6pt !important;display:block !important;}
+  .logo{background:#2563EB !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .sub{color:#333 !important;}
+
+  h1,h2,h3,h4{color:#000 !important;page-break-after:avoid;}
+  h2{border-bottom:1.5pt solid #333 !important;margin-top:14pt !important;}
+  h3{color:#1d4ed8 !important;}
+  a{color:#000 !important;border-bottom:none !important;text-decoration:underline;}
+  strong{color:#000 !important;}
+
+  .panel{
+    display:block !important;
+    page-break-after:auto !important;
+    animation:none !important;
+    max-width:100% !important;
+    padding:0 !important;
+    border-top:1pt solid #bbb;
+    margin-top:8mm;
+    padding-top:4mm;
+  }
+  .panel:first-of-type{border-top:0;margin-top:0;padding-top:0;}
+
+  .hero-svg-mount{
+    box-shadow:none !important;border:1pt solid #999 !important;
+    background:#fff !important;page-break-inside:avoid;
+  }
+  [data-svg-hero]{display:block !important;}
+  .svg-caption{color:#333 !important;}
+
+  .card,.note,.credit-card,details,.checklist li,.promptBox,.promptIntro{
+    background:#fff !important;color:#000 !important;
+    border:1pt solid #999 !important;box-shadow:none !important;
+    page-break-inside:avoid;
+  }
+  .card.accent{border-left:3pt solid #2563EB !important;}
+  .card.ok{border-left:3pt solid #16A34A !important;}
+  .card.warn{border-left:3pt solid #f59e0b !important;}
+  .card.bad{border-left:3pt solid #ef4444 !important;}
+  .badge{background:#e5e7eb !important;color:#000 !important;border:1pt solid #999 !important;}
+  .badge.blue,.badge.green{background:#e5e7eb !important;color:#000 !important;}
+  .promptBox .promptNum{background:#e5e7eb !important;color:#000 !important;border:1pt solid #999 !important;}
+
+  .steps > li{background:#fff !important;border:1pt solid #999 !important;page-break-inside:avoid;}
+  .steps > li::before{background:#2563EB !important;color:#fff !important;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+  .steps > li .why{color:#333 !important;border-left:2pt solid #16A34A !important;}
+  .steps > li .expect{color:#166534 !important;}
+
+  pre,.flow,.promptBody{
+    background:#f4f4f4 !important;color:#000 !important;
+    border:1pt solid #999 !important;
+    overflow:visible !important;
+    white-space:pre-wrap !important;
+    word-break:break-word !important;
+    font-size:8.5pt !important;
+    page-break-inside:avoid;
+  }
+  code{background:#eee !important;color:#000 !important;}
+
+  table{
+    display:table !important;width:100% !important;
+    border-collapse:collapse !important;
+    overflow:visible !important;
+    font-size:9pt !important;
+    page-break-inside:avoid;
+  }
+  thead th{
+    background:#e8e8e8 !important;color:#000 !important;
+    border:1pt solid #666 !important;
+    print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  }
+  tbody td{border:1pt solid #999 !important;color:#000 !important;background:#fff !important;}
+  tbody tr:nth-child(even){background:#f7f7f7 !important;}
+
+  details{border:1pt solid #999 !important;}
+  details summary{border-bottom:1pt solid #999 !important;color:#000 !important;}
+  details summary::after{display:none !important;}
+
+  .credit-name{color:#000 !important;-webkit-text-fill-color:#000 !important;}
+  .credit-role{color:#1d4ed8 !important;}
+  .meta-row,.meta-row b{color:#000 !important;}
+
+  .to-top,.copyBtn{display:none !important;}
+  .kbd{background:#eee !important;border:1pt solid #999 !important;color:#000 !important;}
+
+  .promptIndex{display:block !important;}
+  .promptIndex a{background:#fff !important;color:#000 !important;border:1pt solid #999 !important;margin-bottom:4pt !important;display:block !important;}
+  .promptIndex a::before{color:#1d4ed8 !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar" aria-hidden="true"></div>
+
+<!-- ================= SVG FUENTE (único lugar donde vive el dibujo) ================= -->
+<svg id="svgHeroSource" width="0" height="0" aria-hidden="true" focusable="false"
+     style="position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden;">
+  <defs>
+    <linearGradient id="gBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <linearGradient id="gAcc" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#16A34A"/>
+    </linearGradient>
+    <filter id="fGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="3.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="svgHero">
+    <!-- Fondo -->
+    <rect x="0" y="0" width="820" height="260" rx="20" fill="url(#gBg)"/>
+    <rect x="1" y="1" width="818" height="258" rx="19" fill="none"
+          stroke="#2563EB" stroke-opacity="0.35" stroke-width="1.5"/>
+
+    <!-- ===== BASE DE DATOS ===== -->
+    <g transform="translate(64,58)">
+      <path d="M0 18 V114 a50 16 0 0 0 100 0 V18" fill="#0a0e1a" stroke="#2563EB" stroke-width="2"/>
+      <path d="M0 50 a50 16 0 0 0 100 0" fill="none" stroke="#2563EB" stroke-width="1.4" stroke-opacity="0.6"/>
+      <path d="M0 82 a50 16 0 0 0 100 0" fill="none" stroke="#2563EB" stroke-width="1.4" stroke-opacity="0.6"/>
+      <ellipse cx="50" cy="18" rx="50" ry="16" fill="#2563EB" fill-opacity="0.22"
+               stroke="#2563EB" stroke-width="2"/>
+      <circle cx="50" cy="18" r="5" fill="#16A34A" filter="url(#fGlow)">
+        <animate attributeName="opacity" values="0.25;1;0.25" dur="1.8s" repeatCount="indefinite"/>
+        <animate attributeName="r" values="4;6.6;4" dur="1.8s" repeatCount="indefinite"/>
+      </circle>
+      <text x="50" y="152" text-anchor="middle" font-family="system-ui,sans-serif"
+            font-size="10.5" font-weight="800" fill="#64748B" letter-spacing="1.4">BASE DE DATOS</text>
+    </g>
+
+    <!-- ===== CASA + CHISPA IA ===== -->
+    <g transform="translate(252,48)">
+      <circle cx="22" cy="26" r="34" fill="#2563EB" fill-opacity="0.10">
+        <animate attributeName="r" values="30;40;30" dur="3.4s" repeatCount="indefinite"/>
+        <animate attributeName="fill-opacity" values="0.18;0.04;0.18" dur="3.4s" repeatCount="indefinite"/>
+      </circle>
+      <g>
+        <animateTransform attributeName="transform" type="translate"
+                          values="0 0; 0 -7; 0 0" dur="3.4s" repeatCount="indefinite"/>
+        <path d="M2 24 L22 6 L42 24" fill="none" stroke="#16A34A" stroke-width="3.4"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="8" y="24" width="28" height="22" rx="2.5" fill="#1e3a5f"
+              stroke="#16A34A" stroke-width="2"/>
+        <rect x="18" y="32" width="8" height="14" rx="1" fill="#2563EB"/>
+      </g>
+    </g>
+
+    <!-- Chispa IA -->
+    <g fill="#16A34A" filter="url(#fGlow)">
+      <path d="M0 -6 L1.7 -1.7 L6 0 L1.7 1.7 L0 6 L-1.7 1.7 L-6 0 L-1.7 -1.7 Z">
+        <animateTransform attributeName="transform" type="translate"
+                          values="304 52; 304 44; 304 52" dur="2.6s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.15;1;0.15" dur="2.6s" repeatCount="indefinite"/>
+      </path>
+    </g>
+
+    <!-- ===== FLUJO DE DATOS ===== -->
+    <path d="M176 130 H 384" fill="none" stroke="#2563EB" stroke-width="2"
+          stroke-opacity="0.55" stroke-dasharray="7 7">
+      <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="0.9s" repeatCount="indefinite"/>
+    </path>
+    <polygon points="384,123 398,130 384,137" fill="#2563EB"/>
+    <circle r="5.5" fill="#16A34A" filter="url(#fGlow)">
+      <animateMotion dur="2.2s" repeatCount="indefinite" path="M176 130 H 388"/>
+    </circle>
+    <circle r="4.4" fill="#2563EB" filter="url(#fGlow)">
+      <animateMotion dur="2.2s" begin="0.73s" repeatCount="indefinite" path="M176 130 H 388"/>
+    </circle>
+    <circle r="4.4" fill="#2563EB" filter="url(#fGlow)">
+      <animateMotion dur="2.2s" begin="1.46s" repeatCount="indefinite" path="M176 130 H 388"/>
+    </circle>
+
+    <!-- ===== PANEL CRM ===== -->
+    <g transform="translate(400,36)">
+      <rect x="0" y="0" width="384" height="188" rx="14" fill="#0a0e1a"
+            stroke="#1e3a5f" stroke-width="2"/>
+      <path d="M0 14 a14 14 0 0 1 14 -14 h356 a14 14 0 0 1 14 14 v16 H0 Z" fill="#1e3a5f"/>
+      <circle cx="18" cy="15" r="4" fill="#ef4444"/>
+      <circle cx="32" cy="15" r="4" fill="#f59e0b"/>
+      <circle cx="46" cy="15" r="4" fill="#16A34A"/>
+      <text x="200" y="20" text-anchor="middle" font-family="system-ui,sans-serif"
+            font-size="10.5" font-weight="800" fill="#94a3b8" letter-spacing="1.4">PANEL CRM INMOBILIARIO</text>
+
+      <!-- Tarjeta 1 -->
+      <g>
+        <rect x="16" y="44" width="109" height="46" rx="9" fill="#0f172a"
+              stroke="#2563EB" stroke-width="1.5" stroke-opacity="0.6">
+          <animate attributeName="stroke-opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+        </rect>
+        <circle cx="102" cy="58" r="4" fill="#2563EB">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <text x="28" y="68" font-family="system-ui,sans-serif" font-size="17" font-weight="800" fill="#2563EB">12</text>
+        <text x="28" y="81" font-family="system-ui,sans-serif" font-size="8" fill="#64748B" letter-spacing="0.8">PROPIEDADES</text>
+      </g>
+
+      <!-- Tarjeta 2 -->
+      <g>
+        <rect x="137" y="44" width="109" height="46" rx="9" fill="#0f172a"
+              stroke="#16A34A" stroke-width="1.5" stroke-opacity="0.6">
+          <animate attributeName="stroke-opacity" values="0.3;1;0.3" dur="3.4s" begin="0.4s" repeatCount="indefinite"/>
+        </rect>
+        <circle cx="223" cy="58" r="4" fill="#16A34A">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="3.4s" begin="0.4s" repeatCount="indefinite"/>
+        </circle>
+        <text x="149" y="68" font-family="system-ui,sans-serif" font-size="17" font-weight="800" fill="#16A34A">28</text>
+        <text x="149" y="81" font-family="system-ui,sans-serif" font-size="8" fill="#64748B" letter-spacing="0.8">CLIENTES</text>
+      </g>
+
+      <!-- Tarjeta 3 -->
+      <g>
+        <rect x="258" y="44" width="109" height="46" rx="9" fill="#0f172a"
+              stroke="#2563EB" stroke-width="1.5" stroke-opacity="0.6">
+          <animate attributeName="stroke-opacity" values="0.3;1;0.3" dur="3.8s" begin="0.8s" repeatCount="indefinite"/>
+        </rect>
+        <circle cx="344" cy="58" r="4" fill="#2563EB">
+          <animate attributeName="opacity" values="0.2;1;0.2" dur="3.8s" begin="0.8s" repeatCount="indefinite"/>
+        </circle>
+        <text x="270" y="68" font-family="system-ui,sans-serif" font-size="17" font-weight="800" fill="#2563EB">3</text>
+        <text x="270" y="81" font-family="system-ui,sans-serif" font-size="8" fill="#64748B" letter-spacing="0.8">CITAS HOY</text>
+      </g>
+
+      <!-- Gráfico de barras -->
+      <g>
+        <rect x="16" y="104" width="154" height="68" rx="9" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+        <rect x="28" y="150" width="14" height="14" rx="3" fill="url(#gAcc)">
+          <animate attributeName="height" values="14;34;14" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="150;130;150" dur="2.4s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="50" y="142" width="14" height="22" rx="3" fill="url(#gAcc)">
+          <animate attributeName="height" values="22;48;22" dur="3.0s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="142;116;142" dur="3.0s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="72" y="146" width="14" height="18" rx="3" fill="url(#gAcc)">
+          <animate attributeName="height" values="18;40;18" dur="2.7s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="146;124;146" dur="2.7s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="94" y="136" width="14" height="28" rx="3" fill="url(#gAcc)">
+          <animate attributeName="height" values="28;54;28" dur="3.3s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="136;110;136" dur="3.3s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="116" y="144" width="14" height="20" rx="3" fill="url(#gAcc)">
+          <animate attributeName="height" values="20;44;20" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="144;120;144" dur="2.5s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="138" y="132" width="14" height="32" rx="3" fill="url(#gAcc)">
+          <animate attributeName="height" values="32;52;32" dur="3.1s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="132;112;132" dur="3.1s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+
+      <!-- Lista de registros -->
+      <g>
+        <rect x="186" y="104" width="182" height="68" rx="9" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
+        <circle cx="203" cy="120" r="5" fill="#16A34A">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.2s" repeatCount="indefinite"/>
+        </circle>
+        <rect x="216" y="116" width="90" height="7" rx="3.5" fill="#1e3a5f">
+          <animate attributeName="width" values="46;132;46" dur="3.4s" repeatCount="indefinite"/>
+        </rect>
+
+        <circle cx="203" cy="138" r="5" fill="#2563EB">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.8s" begin="0.5s" repeatCount="indefinite"/>
+        </circle>
+        <rect x="216" y="134" width="90" height="7" rx="3.5" fill="#1e3a5f">
+          <animate attributeName="width" values="60;118;60" dur="3.9s" begin="0.5s" repeatCount="indefinite"/>
+        </rect>
+
+        <circle cx="203" cy="156" r="5" fill="#16A34A">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" begin="1s" repeatCount="indefinite"/>
+        </circle>
+        <rect x="216" y="152" width="90" height="7" rx="3.5" fill="#1e3a5f">
+          <animate attributeName="width" values="38;126;38" dur="3.1s" begin="1s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </g>
+  </g>
+</svg>
+
+<!-- ================= TOPBAR ================= -->
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">CRM</div>
+    <div>
+      <h1>Panel CRM Inmobiliario con IA y Base de Datos Real</h1>
+      <p class="sub">Tutorial práctico paso a paso — de cero a una app web funcional en minutos</p>
+    </div>
+  </div>
+  <div class="toolbar" role="toolbar" aria-label="Herramientas del tutorial">
+    <input id="searchInput" type="search" placeholder="Buscar en la pestaña activa…" aria-label="Buscar en el tutorial">
+    <button id="btnFontMinus" type="button" title="Reducir tamaño del texto" aria-label="Reducir texto">A−</button>
+    <button id="btnFontPlus" type="button" title="Aumentar tamaño del texto" aria-label="Aumentar texto">A+</button>
+    <button id="btnTheme" type="button" title="Cambiar modo claro / oscuro" aria-label="Cambiar tema">🌙</button>
+    <button id="btnPrint" type="button" title="Imprimir o guardar como PDF" aria-label="Imprimir o PDF">🖨</button>
+  </div>
+  <div class="search-info" id="searchInfo" aria-live="polite"></div>
+</header>
+
+<!-- ================= TABS ================= -->
+<nav class="tabs" role="tablist" aria-label="Secciones del tutorial">
+  <button class="tab active" data-tab="p-inicio" role="tab" type="button">INICIO</button>
+  <button class="tab" data-tab="p-conceptos" role="tab" type="button">CONCEPTOS</button>
+  <button class="tab" data-tab="p-procedimiento" role="tab" type="button">PROCEDIMIENTO</button>
+  <button class="tab" data-tab="p-practica" role="tab" type="button">PRÁCTICA</button>
+  <button class="tab" data-tab="p-errores" role="tab" type="button">ERRORES</button>
+  <button class="tab" data-tab="p-resumen" role="tab" type="button">RESUMEN</button>
+  <button class="tab" data-tab="p-fuentes" role="tab" type="button">FUENTES</button>
+  <button class="tab" data-tab="p-prompts" role="tab" type="button">PROMPTS</button>
+  <button class="tab" data-tab="p-creditos" role="tab" type="button">CRÉDITOS</button>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     PANEL: INICIO
+============================================================ -->
+<section id="p-inicio" class="panel active" role="tabpanel" aria-label="Inicio">
+
+  <span class="badge blue">Tutorial para principiantes</span>
+
+  <div class="hero-svg-mount" data-svg-hero="true" role="img"
+       aria-label="Animación: una base de datos envía registros a un panel CRM inmobiliario con tarjetas, gráficos y listas."></div>
+  <p class="svg-caption">
+    Así funciona lo que vas a construir: una <b>base de datos real</b> alimenta un <b>panel web</b> con propiedades, clientes y citas.
+  </p>
+
+  <h2>¿Qué vas a aprender aquí?</h2>
+  <p>
+    Vas a aprender a crear un <strong>panel CRM inmobiliario web con base de datos real</strong> usando
+    herramientas de <strong>Inteligencia Artificial generativa de código</strong>. No necesitas saber programar:
+    escribirás instrucciones en español (llamadas <em>prompts</em>) y la IA construirá la aplicación por ti.
+  </p>
+  <p>
+    En menos de una hora tendrás claro cómo pasar de una idea a un panel funcional con cuatro pantallas
+    (Dashboard, Propiedades, Clientes y Calendario), autenticación de usuarios y datos que <strong>se guardan de verdad</strong>.
+  </p>
+
+  <h2>¿Para qué sirve un CRM inmobiliario?</h2>
+  <div class="grid2">
+    <div class="card accent">
+      <h4>🏢 Propiedades</h4>
+      <p>Guardar cada inmueble con foto, precio, ubicación y descripción. Verlos en tarjetas y en vista detalle.</p>
+    </div>
+    <div class="card accent">
+      <h4>👥 Clientes</h4>
+      <p>Tener una tabla con nombre, teléfono y email, más notas de seguimiento de cada comprador o vendedor.</p>
+    </div>
+    <div class="card accent">
+      <h4>📅 Citas</h4>
+      <p>Agendar visitas en un calendario mensual vinculando un cliente concreto con una propiedad concreta.</p>
+    </div>
+    <div class="card accent">
+      <h4>📊 Dashboard</h4>
+      <p>Ver de un vistazo cuántas propiedades activas tienes, cuántos clientes y qué citas hay hoy.</p>
+    </div>
+  </div>
+
+  <h2>¿Por qué merece la pena aprenderlo?</h2>
+  <div class="card ok">
+    <ol>
+      <li><strong>Ahorro masivo de dinero.</strong> Encargar este software a programadores tradicionales puede costar miles de dólares. Con IA consigues un prototipo funcional o una aplicación terminada sin coste inicial usando planes gratuitos.</li>
+      <li><strong>Velocidad de ejecución.</strong> En lugar de esperar semanas o meses, obtienes un panel web operando en minutos.</li>
+      <li><strong>Autonomía tecnológica.</strong> Profesionales independientes y pequeñas agencias pueden crear herramientas a medida sin depender de terceros.</li>
+    </ol>
+  </div>
+
+  <h2>Situaciones reales donde se utiliza</h2>
+  <ul>
+    <li><strong>Agentes inmobiliarios independientes:</strong> necesitan registrar sus captaciones de viviendas y sus clientes sin pagar licencias mensuales elevadas.</li>
+    <li><strong>Agencias inmobiliarias pequeñas:</strong> buscan modernizar su flujo de trabajo y visualizar las visitas en un calendario dinámico.</li>
+    <li><strong>Emprendedores y desarrolladores No-Code:</strong> quieren prototipar rápido una aplicación web para validar una idea ante inversores o clientes.</li>
+  </ul>
+
+  <h2>¿Qué necesitas antes de empezar?</h2>
+  <ul class="checklist">
+    <li>
+      <input type="checkbox" id="ck-01" data-ck="ck-01">
+      <label for="ck-01">Un ordenador con navegador web actualizado (Chrome, Edge, Firefox o Safari).</label>
+    </li>
+    <li>
+      <input type="checkbox" id="ck-02" data-ck="ck-02">
+      <label for="ck-02">Una cuenta de Google (te sirve para entrar tanto en Google AI Studio como en Moca).</label>
+    </li>
+    <li>
+      <input type="checkbox" id="ck-03" data-ck="ck-03">
+      <label for="ck-03">Conexión a Internet para trabajar con las plataformas de IA (este tutorial, en cambio, funciona sin conexión).</label>
+    </li>
+    <li>
+      <input type="checkbox" id="ck-04" data-ck="ck-04">
+      <label for="ck-04">El <strong>Prompt Maestro</strong> copiado en el portapapeles (lo encontrarás en la pestaña PROCEDIMIENTO y en PROMPTS).</label>
+    </li>
+    <li>
+      <input type="checkbox" id="ck-05" data-ck="ck-05">
+      <label for="ck-05">Ganas de probar y equivocarse: la IA se corrige conversando, no hay que saber programar.</label>
+    </li>
+  </ul>
+
+  <h2>Objetivos del tutorial</h2>
+  <div class="card">
+    <ol>
+      <li>Entender <strong>qué es</strong> un CRM inmobiliario y para qué sirve.</li>
+      <li>Distinguir entre <strong>datos estáticos (hardcodeados)</strong> y una <strong>base de datos relacional real</strong>.</li>
+      <li>Saber redactar un <strong>Prompt Maestro</strong> profesional y accionable.</li>
+      <li>Construir el panel completo en <strong>Moca</strong>, con base de datos, autenticación y datos demo.</li>
+      <li>Prototipar rápido en <strong>Google AI Studio</strong> y proteger el trabajo con <strong>Restore Checkpoint</strong>.</li>
+      <li>Evaluar costes y planes para llevar el CRM a producción.</li>
+    </ol>
+  </div>
+
+  <h2>Cómo utilizar este tutorial</h2>
+  <p>El tutorial está organizado en pestañas. Te recomiendo este orden:</p>
+  <table>
+    <thead>
+      <tr><th>Pestaña</th><th>Para qué sirve</th><th>Cuándo usarla</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>INICIO</b></td><td>Visión general y requisitos</td><td>Ahora, antes de empezar</td></tr>
+      <tr><td><b>CONCEPTOS</b></td><td>Las 4 ideas clave + comparativa de herramientas</td><td>Antes de tocar ninguna IA</td></tr>
+      <tr><td><b>PROCEDIMIENTO</b></td><td>Pasos numerados en Moca y en Google AI Studio</td><td>Con el Prompt Maestro ya copiado</td></tr>
+      <tr><td><b>PRÁCTICA</b></td><td>Ejercicios, checklist de aprendizaje y FAQ</td><td>Al terminar cada capítulo</td></tr>
+      <tr><td><b>ERRORES</b></td><td>Lo que nunca debes hacer y cómo salir de un fallo</td><td>Cuando algo no funcione</td></tr>
+      <tr><td><b>RESUMEN</b></td><td>Síntesis, glosario y diagramas</td><td>Para repasar al final</td></tr>
+      <tr><td><b>FUENTES</b></td><td>Documento y vídeo de referencia</td><td>Si quieres profundizar</td></tr>
+      <tr><td><b>PROMPTS</b></td><td>Todos los prompts listos para copiar y pegar</td><td>Cuando vayas a construir la app</td></tr>
+      <tr><td><b>CRÉDITOS</b></td><td>Autoría, fecha de creación y versión del archivo</td><td>Al final</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    💡 <strong>Truco:</strong> usa la barra de búsqueda de arriba para encontrar cualquier término dentro de la pestaña
+    en la que estés. Los resultados se resaltan en amarillo.
+  </div>
+
+  <p style="margin-top:26px;">
+    <button class="btn-inline" type="button" data-goto="p-conceptos">Empezar por los CONCEPTOS →</button>
+    <button class="btn-inline ghost" type="button" data-goto="p-procedimiento">Ir directo al PROCEDIMIENTO</button>
+    <button class="btn-inline ghost" type="button" data-goto="p-prompts">Ver todos los PROMPTS</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: CONCEPTOS
+============================================================ -->
+<section id="p-conceptos" class="panel" role="tabpanel" aria-label="Conceptos fundamentales">
+
+  <span class="badge">Capítulo 1</span>
+  <h2>Conceptos Fundamentales y Herramientas</h2>
+
+  <p>
+    Antes de escribir una sola letra en una plataforma de IA, necesitas dominar <strong>cuatro conceptos</strong>.
+    Si los entiendes, todo lo demás sale solo.
+  </p>
+
+  <h3>1. CRM Inmobiliario</h3>
+  <p>
+    Un <strong>CRM inmobiliario</strong> (siglas inglesas de <em>Customer Relationship Management</em>, o
+    <strong>Gestión de Relaciones con Clientes</strong>) es un sistema de software diseñado para organizar,
+    automatizar y administrar todas las interacciones de un negocio inmobiliario.
+  </p>
+  <p>Sirve para:</p>
+  <ul>
+    <li>Gestionar las <strong>propiedades</strong> disponibles.</li>
+    <li>Dar <strong>seguimiento</strong> a clientes compradores o vendedores.</li>
+    <li>Coordinar <strong>citas</strong> en un calendario.</li>
+    <li>Guardar el <strong>historial de acuerdos</strong> en un solo lugar centralizado.</li>
+  </ul>
+
+  <h3>2. Base de Datos Relacional</h3>
+  <p>
+    Es la estructura interna donde se almacenan de forma organizada las <strong>tablas de información</strong>:
+    propiedades, clientes, citas y usuarios. Cada tabla tiene columnas (campos) y filas (registros), y las tablas
+    se relacionan entre sí (por ejemplo, una cita apunta a un cliente y a una propiedad).
+  </p>
+
+  <h3>3. Prompt</h3>
+  <p>
+    Un <strong>prompt</strong> es la instrucción escrita y detallada que le entregamos a la Inteligencia Artificial
+    para que genere el software. Cuanto más concreta, mejor será el resultado.
+  </p>
+
+  <h3>4. Persistencia de Datos: la diferencia que lo cambia todo</h3>
+  <table>
+    <thead>
+      <tr><th>Tipo</th><th>Qué es</th><th>Qué pasa al cerrar la ventana</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Datos hardcodeados / estáticos</b></td>
+        <td>Datos fijos insertados dentro del código (por ejemplo, un archivo JSON estático).</td>
+        <td>Se pierden. Si agregas un dato nuevo, no se guarda de forma duradera.</td>
+      </tr>
+      <tr>
+        <td><b>Base de datos real</b></td>
+        <td>Estructura externa donde los registros se guardan permanentemente en servidores.</td>
+        <td>Se conservan. Permite crear, consultar, actualizar y eliminar datos (operaciones <b>CRUD</b>).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Analogía cotidiana: el restaurante</h3>
+  <div class="card accent">
+    <p>Imagina que tu CRM es un <strong>restaurante</strong>:</p>
+    <ul>
+      <li>La <strong>Interfaz Web (Frontend)</strong> son las mesas, el menú impreso y la decoración que ve el cliente.</li>
+      <li>La <strong>Base de Datos (Backend)</strong> es el almacén y la despensa donde se guardan organizadamente todos los ingredientes. Si no hay almacén real, las comidas del menú son de plástico (datos de demostración estáticos).</li>
+      <li>La <strong>IA (Moca o Gemini)</strong> es el cocinero experto que arma todo el restaurante siguiendo tus recetas escritas (el <strong>prompt</strong>).</li>
+    </ul>
+  </div>
+
+  <h3>Comparativa de herramientas: Google AI Studio vs. Moca</h3>
+  <table>
+    <thead>
+      <tr><th>Característica</th><th>Google AI Studio</th><th>Moca</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Modelo de IA principal</b></td>
+        <td>Gemini</td>
+        <td>Modelos avanzados (como Claude Sonnet)</td>
+      </tr>
+      <tr>
+        <td><b>Integración de Base de Datos Real</b></td>
+        <td>No. Genera prototipos estáticos con archivos JSON</td>
+        <td><b>Sí.</b> Crea e integra automáticamente bases de datos relacionales</td>
+      </tr>
+      <tr>
+        <td><b>Autenticación de Usuarios</b></td>
+        <td>Solo simulación de interfaz</td>
+        <td><b>Integración real</b> (login con Google / Email)</td>
+      </tr>
+      <tr>
+        <td><b>Control de Cambios / Reversión</b></td>
+        <td><b>Excelente</b> (función <em>Restore Checkpoint</em>)</td>
+        <td>A través de iteraciones por chat y créditos</td>
+      </tr>
+      <tr>
+        <td><b>Costo Inicial</b></td>
+        <td>Gratuito con cuenta de Google</td>
+        <td>Créditos de prueba gratuitos (120 en plan Free)</td>
+      </tr>
+      <tr>
+        <td><b>Uso Ideal</b></td>
+        <td>Prototipado rápido de interfaz visual (UI/UX)</td>
+        <td>Aplicaciones web completas y funcionales con base de datos</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Ejemplo correcto vs. incorrecto de Prompt</h3>
+
+  <div class="card bad">
+    <h4>❌ Ejemplo incorrecto (vago e impreciso)</h4>
+    <p><em>"Hazme una página web para vender casas y gestionar clientes."</em></p>
+    <p><strong>¿Por qué es incorrecto?</strong> La IA no sabrá qué pantallas necesita, qué colores usar, ni qué campos
+    requiere la base de datos, por lo que generará algo genérico e incompleto.</p>
+  </div>
+
+  <div class="card ok">
+    <h4>✔️ Ejemplo correcto (estructurado y accionable)</h4>
+    <p><em>"Crea una aplicación web para un panel de CRM inmobiliario… Incluye 4 pantallas: Dashboard, Propiedades,
+    Clientes y Calendario. Conecta una base de datos con 3 tablas principales (propiedades, clientes, citas) y datos
+    de demostración."</em></p>
+    <p><strong>¿Por qué funciona?</strong> Nombra las pantallas, los componentes, la base de datos y los datos demo.
+    No deja nada a la imaginación de la IA.</p>
+  </div>
+
+  <h2>Resumen del Capítulo 1</h2>
+  <div class="card">
+    <ul>
+      <li>Un CRM organiza clientes, inmuebles y citas.</li>
+      <li>Para tener un sistema funcional se requiere interfaz <strong>y base de datos real</strong>.</li>
+      <li><strong>Google AI Studio</strong> es excelente para prototipar diseños con Gemini.</li>
+      <li><strong>Moca</strong> destaca por crear automáticamente bases de datos reales y autenticación funcional en minutos.</li>
+    </ul>
+  </div>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-procedimiento">Siguiente: PROCEDIMIENTO →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: PROCEDIMIENTO
+============================================================ -->
+<section id="p-procedimiento" class="panel" role="tabpanel" aria-label="Procedimiento paso a paso">
+
+  <span class="badge">Capítulos 2, 3, 4 y 5</span>
+  <h2>Procedimiento Paso a Paso</h2>
+
+  <p>
+    El éxito de una aplicación creada con Inteligencia Artificial depende en un <strong>90 %</strong> de la claridad
+    de su instrucción inicial. Vamos a construir primero el prompt y después la aplicación.
+  </p>
+
+  <h3>Capítulo 2 — El Prompt Maestro Completo</h3>
+  <p>
+    Este es el <strong>prompt profesional de dos etapas</strong> que usarás tal cual. Cópialo con el botón
+    <b>COPIAR</b> y pégalo en la plataforma que elijas. (También lo tienes disponible en la pestaña
+    <b>PROMPTS</b>, junto al resto de prompts del proyecto.)
+  </p>
+
+  <div class="promptBox" id="pr-proc-maestro">
+    <span class="promptNum">PROMPT MAESTRO</span>
+    <h3>Prompt Maestro de Arquitectura y Diseño</h3>
+    <p class="promptMeta"><b>Descripción:</b> instrucción inicial que define todas las pantallas, la paleta de colores, la navegación y la base de datos del CRM.</p>
+    <p class="promptMeta"><b>Uso:</b> úsalo al inicio del proyecto, en la primera interacción con la IA (Moca o Google AI Studio).</p>
+    <pre class="promptBody" id="promptMaestro">Crea una aplicación web para un panel de CRM inmobiliario. La aplicación debe ser visualmente atractiva, moderna y con diseño de alta calidad.
+
+PRIMERA ETAPA - DISEÑO Y NAVEGABILIDAD
+
+Pantallas esenciales:
+
+1. Dashboard Simple
+- Contador de propiedades activas
+- Contador de clientes
+- Lista de citas de hoy
+- Acceso rápido a agregar propiedad/cliente
+
+2. Propiedades
+- Listado en cards con foto, precio y ubicación
+- Formulario para agregar propiedad (campos básicos: título, precio, ubicación, fotos, descripción)
+- Vista detalle con galería y datos básicos
+
+3. Clientes
+- Tabla simple con nombre, teléfono, email
+- Formulario para agregar cliente
+- Vista de detalle con notas
+
+4. Calendario
+- Vista mensual de citas
+- Modal para crear cita vinculando cliente y propiedad
+
+Diseño:
+- Navegación lateral simple con 4 opciones e iconos profesionales
+- Colores: fondo blanco, azul primario (#2563EB), gris para textos (#64748B), verde (#16A34A) para acciones positivas y estados de éxito
+- Totalmente responsive
+
+BASE DE DATOS
+- 3 tablas básicas: propiedades, clientes, citas
+- Autenticación simple email/password
+- CRUD básico
+- Subida de imágenes
+
+Datos de demostración:
+- Generar set completo de datos demo
+- Todos los datos desde la base de datos (nada hardcodeado)</pre>
+    <button class="copyBtn" type="button">COPIAR</button>
+  </div>
+
+  <h3>Desglose de la estructura de la aplicación</h3>
+  <div class="flow">┌────────────────────────────────────────────────────────────────────────┐
+│                   PANEL CRM INMOBILIARIO WEB                           │
+├─────────────────┬──────────────────────────────────────────────────────┤
+│  MENÚ LATERAL   │                  PANTALLA PRINCIPAL                  │
+│                 ├──────────────────────────────────────────────────────┤
+│ 📊 Dashboard    │ • Indicadores: Propiedades Activas | Clientes        │
+│                 │ • Citas de Hoy                                       │
+│ 🏢 Propiedades  │ • Botones de Acceso Rápido                           │
+│                 ├──────────────────────────────────────────────────────┤
+│ 👥 Clientes     │ • Catálogo en tarjetas (Cards) con foto y precio     │
+│                 │ • Formularios de alta y vista de detalles            │
+│ 📅 Calendario   │ ├────────────────────────────────────────────────────┤
+│                 │ • Agenda mensual de visitas vinculando cliente/piso  │
+└─────────────────┴──────────────────────────────────────────────────────┘</div>
+
+  <h3>Lista de comprobación previa</h3>
+  <ul class="checklist">
+    <li><input type="checkbox" id="ck-06" data-ck="ck-06"><label for="ck-06">El texto del prompt copiado en el portapapeles.</label></li>
+    <li><input type="checkbox" id="ck-07" data-ck="ck-07"><label for="ck-07">Cuenta creada en Google AI Studio o Moca.</label></li>
+    <li><input type="checkbox" id="ck-08" data-ck="ck-08"><label for="ck-08">Créditos disponibles en la plataforma elegida.</label></li>
+  </ul>
+
+  <div class="card">
+    <h4>Resumen del Capítulo 2</h4>
+    <ul>
+      <li>El prompt debe dividir el proyecto en etapas claras: <strong>Diseño/Navegabilidad</strong> y <strong>Base de Datos</strong>.</li>
+      <li>Debe definir la paleta de colores con códigos exactos (ej. azul <code>#2563EB</code>, verde <code>#16A34A</code>) y componentes específicos.</li>
+      <li>La instrucción <em>"Todos los datos desde la base de datos (nada hardcodeado)"</em> es fundamental para forzar la creación de persistencia real.</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <h3>Capítulo 3 — Construcción paso a paso en Moca (base de datos real)</h3>
+  <p>Sigue esta secuencia numerada. Cada paso tiene una sola acción.</p>
+
+  <ol class="steps">
+    <li>
+      <strong>Regístrate en Moca y obtén tus créditos de prueba.</strong>
+      <p>Entra en la web de Moca, pulsa el botón de registro y crea tu cuenta (puedes vincular tu cuenta de Google).</p>
+      <span class="why"><b>Motivo:</b> al registrarte, Moca asigna automáticamente <b>120 créditos de prueba gratuitos</b> en el plan inicial (<em>Free</em>), lo que te permite probar la generación de software completo.</span>
+      <span class="expect">Resultado esperado: ves tu panel principal con 120 créditos disponibles.</span>
+    </li>
+    <li>
+      <strong>Crea un nuevo proyecto e ingresa el Prompt Maestro.</strong>
+      <p>En el panel principal de Moca pulsa <b>Create New</b> y pega el Prompt Maestro en la casilla de texto principal. Pulsa ejecutar.</p>
+      <span class="why"><b>Motivo:</b> Moca procesará las instrucciones (normalmente con modelos de última generación como Claude Sonnet) para estructurar el código fuente y los esquemas de base de datos simultáneamente.</span>
+      <span class="expect">Resultado esperado: la IA empieza a generar la aplicación y su backend.</span>
+    </li>
+    <li>
+      <strong>Supervisa la creación automática de la base de datos.</strong>
+      <p>Observa el panel de desarrollo mientras trabaja y haz clic en la pestaña <b>Data</b> del menú lateral.</p>
+      <span class="why"><b>Verificación:</b> comprueba que la IA haya creado automáticamente las 4 tablas necesarias: <code>propiedades</code>, <code>clientes</code>, <code>citas</code> y <code>usuarios</code>.</span>
+      <span class="expect">Resultado esperado: ves las 4 tablas listadas con sus columnas.</span>
+      <span class="why"><b>Motivo:</b> a diferencia de otras plataformas, Moca lee la instrucción de persistencia y diseña la estructura relacional sin que tengas que configurar SQL a mano.</span>
+    </li>
+    <li>
+      <strong>Puebla el sistema con datos de demostración.</strong>
+      <p>Cuando Moca termine la primera versión visual, abre la vista previa a pantalla completa, pulsa <b>Google Login</b> e inicia sesión. En la pantalla inicial, pulsa <b>Cargar datos de demostración</b>.</p>
+      <span class="why"><b>Verificación:</b> navega a <b>Data → propiedades</b> y comprueba que los registros (títulos, precios, enlaces de fotos) aparecen guardados en la tabla.</span>
+      <span class="expect">Resultado esperado: la tabla contiene inmuebles de muestra (por ejemplo, <em>"Casa moderna en Las Condes"</em>) e información de clientes.</span>
+      <span class="why"><b>Motivo:</b> ese botón ejecuta una función interna que inserta los datos demo directamente en la base de datos real.</span>
+    </li>
+    <li>
+      <strong>Implementa formularios y operaciones CRUD avanzadas.</strong>
+      <p>Vuelve a la ventana de chat de Moca y envía este prompt de seguimiento:</p>
+      <div class="promptBox" id="pr-proc-crud">
+        <span class="promptNum">PROMPT DE SEGUIMIENTO</span>
+        <h3>Persistencia y CRUD en Base de Datos</h3>
+        <p class="promptMeta"><b>Descripción:</b> activa la creación y edición de propiedades y clientes con modales integrados.</p>
+        <p class="promptMeta"><b>Uso:</b> envíalo como iteración después de tener el esqueleto del CRM generado.</p>
+        <pre class="promptBody" id="promptCRUD">Permitir crear y editar propiedades y clientes. Implementa componentes modales elegantes que se integren perfectamente con el diseño actual.</pre>
+        <button class="copyBtn" type="button">COPIAR</button>
+      </div>
+      <span class="why"><b>Motivo:</b> la IA agregará las funciones de escritura (INSERT) y edición (UPDATE), incluyendo validaciones de campos como el formato de correo electrónico.</span>
+      <span class="expect">Resultado esperado: prueba crear un nuevo cliente rellenando el formulario modal y comprueba que aparece en la tabla.</span>
+    </li>
+  </ol>
+
+  <div class="flow">[Prompt Ejecutado] ──> [Tablas Creadas en 'Data'] ──> [Cargar Datos Demo] ──> <span class="hl">[Registros Persistentes]</span></div>
+
+  <div class="note amber">
+    ⚠️ <strong>Advertencia sobre consumo de créditos:</strong> las solicitudes complejas que integran base de datos
+    consumen más créditos de procesamiento. Al completar el prompt inicial y la adición de formularios CRUD,
+    es normal agotar los <strong>120 créditos gratuitos</strong> de prueba (quedando en 0 créditos).
+  </div>
+
+  <div class="note green">
+    💡 <strong>Cómo evitar fallos al guardar datos:</strong> si al enviar un formulario (por ejemplo, agregar una
+    propiedad) notas que no se guarda en la base de datos, puede deberse a que la generación consumió el límite de
+    créditos antes de terminar la conexión backend. Revisa siempre que la validación del formulario esté completa.
+  </div>
+
+  <div class="card">
+    <h4>Resumen del Capítulo 3</h4>
+    <ul>
+      <li>Moca genera la interfaz y la base de datos de manera automatizada.</li>
+      <li>La pestaña <code>Data</code> permite auditar directamente los registros de la base de datos.</li>
+      <li>El botón <em>"Cargar datos demo"</em> llena las tablas relacionales activas en un solo clic.</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <h3>Capítulo 4 — Prototipado en Google AI Studio y Restore Checkpoint</h3>
+  <p>Si prefieres diseñar un prototipo estático, rápido e ilimitado, Google AI Studio es la herramienta ideal.</p>
+
+  <ol class="steps">
+    <li>
+      <strong>Configura el entorno en Google AI Studio.</strong>
+      <p>Entra en Google AI Studio con tu cuenta de Google, selecciona el modelo <b>Gemini</b>, pega el Prompt Maestro en la ventana principal de comandos y pulsa <b>Run</b>.</p>
+      <span class="why"><b>Motivo:</b> Gemini generará la aplicación web completa en formato de prototipo estático interactivo.</span>
+      <span class="expect">Resultado esperado: aparece una previsualización con la interfaz del CRM.</span>
+    </li>
+    <li>
+      <strong>Corrige el idioma.</strong>
+      <p>Si el prototipo aparece en inglés, escribe en el chat:</p>
+      <div class="promptBox" id="pr-proc-idioma">
+        <span class="promptNum">PROMPT DE LOCALIZACIÓN</span>
+        <h3>Traducción y Localización al Español</h3>
+        <p class="promptMeta"><b>Descripción:</b> fuerza a que toda la interfaz aparezca en idioma español.</p>
+        <p class="promptMeta"><b>Uso:</b> úsalo cuando la IA genere textos por defecto en inglés.</p>
+        <pre class="promptBody" id="promptIdioma">Todo texto debe aparecer en español.</pre>
+        <button class="copyBtn" type="button">COPIAR</button>
+      </div>
+      <span class="expect">Resultado esperado: toda la interfaz pasa a español.</span>
+    </li>
+    <li>
+      <strong>Afinar la interfaz para que los formularios se vean terminados.</strong>
+      <p>Envía este segundo comando:</p>
+      <div class="promptBox" id="pr-proc-forms">
+        <span class="promptNum">PROMPT DE UI</span>
+        <h3>Completado y Navegabilidad de Formularios</h3>
+        <p class="promptMeta"><b>Descripción:</b> completa los formularios y modales para que se vean terminados y sean navegables.</p>
+        <p class="promptMeta"><b>Uso:</b> úsalo cuando los botones de acción rápida no abran los modales completos.</p>
+        <pre class="promptBody" id="promptForms">Los formularios de añadir propiedad, cliente y cita: completa el diseño para que se vean terminados y sean navegables.</pre>
+        <button class="copyBtn" type="button">COPIAR</button>
+      </div>
+      <span class="why"><b>Motivo:</b> Google AI Studio actualizará el código usando datos estáticos en formato JSON para simular el comportamiento de la plataforma.</span>
+      <span class="expect">Resultado esperado: los botones y formularios responden visualmente aunque no guarden datos.</span>
+    </li>
+    <li>
+      <strong>Si algo se rompe, usa <code>Restore Checkpoint</code>.</strong>
+      <p>Si al enviar una nueva orden la IA comete un error, borra elementos visuales o rompe la aplicación,
+      busca en la barra superior el botón <b>Restore Checkpoint</b> y pulsa.</p>
+      <span class="why"><b>Motivo:</b> te evita perder el trabajo realizado y permite corregir la instrucción sin empezar desde cero.</span>
+      <span class="expect">Resultado esperado: vuelves exactamente a la versión que funcionaba antes del prompt erróneo.</span>
+    </li>
+  </ol>
+
+  <div class="flow">[Versión Funcional (Checkpoint A)] ──> [Prompt con Error] ──> [Código Borrado]
+                                                                        │
+[Versión Restaurada (Checkpoint A)] &lt;── [Botón 'Restore Checkpoint'] ─┘</div>
+
+  <div class="card">
+    <h4>Resumen del Capítulo 4</h4>
+    <ul>
+      <li>Google AI Studio con Gemini es perfecto para prototipado ágil y diseño UI/UX.</li>
+      <li>Utiliza archivos JSON estáticos para mostrar datos sin requerir servidor.</li>
+      <li>La herramienta <code>Restore Checkpoint</code> es la mejor salvaguarda para revertir fallos de generación.</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <h3>Capítulo 5 — Planes, costes y despliegue profesional</h3>
+  <p>Cuando tu CRM esté construido y validado, toca evaluar cómo llevarlo a producción comercial.</p>
+
+  <table>
+    <thead>
+      <tr><th>Parámetro</th><th>Plan Free (Gratuito)</th><th>Plan Pro / Suscripción</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Créditos Incluidos</b></td><td>120 créditos de prueba</td><td>1.500 créditos mensuales</td></tr>
+      <tr><td><b>Aplicaciones Publicables</b></td><td>Limitadas / Prototipos</td><td>Hasta 5 aplicaciones en vivo</td></tr>
+      <tr><td><b>Dominio Personalizado</b></td><td>No disponible</td><td><b>Sí</b> (ej. <code>crm.tuagencia.com</code>)</td></tr>
+      <tr><td><b>Marca de Agua</b></td><td>Incluida</td><td><b>Sin marca de agua</b></td></tr>
+      <tr><td><b>Descuento Anual</b></td><td>N/A</td><td><b>Hasta 13 % de ahorro</b> en pago anual</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card">
+    <h4>Resumen del Capítulo 5</h4>
+    <ul>
+      <li>El Plan Free de Moca sirve para prototipar y construir la versión inicial.</li>
+      <li>Para un uso profesional comercial sin marca de agua y con dominio propio se requiere escalar a una suscripción.</li>
+    </ul>
+  </div>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-practica">Siguiente: PRÁCTICA →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: PRÁCTICA
+============================================================ -->
+<section id="p-practica" class="panel" role="tabpanel" aria-label="Práctica y ejercicios">
+
+  <span class="badge green">Manos a la obra</span>
+  <h2>Práctica: Ejercicios con Solución Explicada</h2>
+
+  <p>Estos ejercicios reproducen situaciones reales que te encontrarás al construir tu CRM.</p>
+
+  <div class="card accent">
+    <h4>Ejercicio 1 — Modificar el esquema de la base de datos</h4>
+    <p><strong>Consigna:</strong> deseas agregar un campo obligatorio de <em>"Número de Dormitorios"</em> a la tabla de propiedades.</p>
+    <details>
+      <summary>Ver solución explicada</summary>
+      <div class="details-body">
+        <ol>
+          <li>Ve al chat de Moca.</li>
+          <li>Escribe este prompt:
+            <div class="copy-wrap">
+              <button class="copyBtn" type="button" data-copy="sol1">COPIAR</button>
+              <pre id="sol1">Actualiza la tabla de propiedades en la base de datos agregando un nuevo campo numérico llamado "dormitorios" y muéstralo en la card de cada propiedad.</pre>
+            </div>
+          </li>
+          <li>Revisa la pestaña <b>Data</b> para confirmar que la columna aparece.</li>
+        </ol>
+        <p><strong>Razón:</strong> la IA actualizará la columna en la pestaña <code>Data</code> y modificará la interfaz visual simultáneamente.
+        Es importante decir <em>"campo numérico"</em> y <em>"muéstralo en la card"</em> para que se cambien las dos capas a la vez.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="card accent">
+    <h4>Ejercicio 2 — Restaurar una versión dañada</h4>
+    <p><strong>Consigna:</strong> le pediste a Google AI Studio un cambio de diseño, pero eliminó la pantalla del calendario.</p>
+    <details>
+      <summary>Ver solución explicada</summary>
+      <div class="details-body">
+        <ol>
+          <li>Dirígete a la parte superior de Google AI Studio.</li>
+          <li>Haz clic en el botón <b>Restore Checkpoint</b>.</li>
+          <li>Comprueba que el calendario vuelve a aparecer.</li>
+          <li>Vuelve a escribir tu petición de diseño, pero esta vez sé más específico: <em>"Cambia solo los colores de las tarjetas del Dashboard. No modifiques ninguna otra pantalla."</em></li>
+        </ol>
+        <p><strong>Razón:</strong> esto revertirá el código al estado exacto previo a la instrucción errónea, sin perder el trabajo anterior.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="card accent">
+    <h4>Ejercicio 3 — Conseguir que los formularios se vean terminados</h4>
+    <p><strong>Consigna:</strong> en el prototipo de Google AI Studio, los formularios se ven a medias y no se pueden navegar.</p>
+    <details>
+      <summary>Ver solución explicada</summary>
+      <div class="details-body">
+        <ol>
+          <li>Abre el chat de Google AI Studio.</li>
+          <li>Pega este prompt de seguimiento:
+            <div class="copy-wrap">
+              <button class="copyBtn" type="button" data-copy="sol3">COPIAR</button>
+              <pre id="sol3">Los formularios de añadir propiedad, cliente y cita: completa el diseño para que se vean terminados y sean navegables.</pre>
+            </div>
+          </li>
+          <li>Prueba a abrir cada formulario y a cerrarlo.</li>
+        </ol>
+        <p><strong>Razón:</strong> Google AI Studio usará datos estáticos en formato JSON para simular el comportamiento,
+        así que los formularios se verán y se navegarán bien, pero <strong>no guardarán datos</strong>. Eso es esperado en esta herramienta.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="card accent">
+    <h4>Ejercicio 4 — Elegir la herramienta correcta</h4>
+    <p><strong>Consigna:</strong> necesitas presentar mañana una demo a un inversor y, por separado, necesitas un CRM que use tu agencia a diario.</p>
+    <details>
+      <summary>Ver solución explicada</summary>
+      <div class="details-body">
+        <ul>
+          <li><strong>Para la demo de mañana:</strong> Google AI Studio con Gemini. Es gratuito, rápido e ilimitado para prototipos visuales y la interfaz se ve muy bien.</li>
+          <li><strong>Para el uso diario de la agencia:</strong> Moca. Necesitas <em>persistencia real</em>: que los clientes y las citas se guarden al cerrar la ventana, y que exista autenticación de usuarios de verdad.</li>
+        </ul>
+        <p><strong>Razón:</strong> la diferencia clave es si los datos deben sobrevivir al cierre de la pestaña o no.</p>
+      </div>
+    </details>
+  </div>
+
+  <h2>Checklist de aprendizaje</h2>
+  <p class="ck-progress" id="ckProgress">Progreso: 0 de 10</p>
+  <ul class="checklist">
+    <li><input type="checkbox" id="ck-09" data-ck="ck-09"><label for="ck-09">Sé explicar qué es un CRM inmobiliario en una frase.</label></li>
+    <li><input type="checkbox" id="ck-10" data-ck="ck-10"><label for="ck-10">Distingo datos hardcodeados de base de datos real.</label></li>
+    <li><input type="checkbox" id="ck-11" data-ck="ck-11"><label for="ck-11">Conozco las 4 pantallas del CRM: Dashboard, Propiedades, Clientes, Calendario.</label></li>
+    <li><input type="checkbox" id="ck-12" data-ck="ck-12"><label for="ck-12">Tengo copiado el Prompt Maestro y sé por qué incluye códigos de color exactos.</label></li>
+    <li><input type="checkbox" id="ck-13" data-ck="ck-13"><label for="ck-13">He creado mi cuenta en Moca y veo los 120 créditos.</label></li>
+    <li><input type="checkbox" id="ck-14" data-ck="ck-14"><label for="ck-14">He verificado en la pestaña <code>Data</code> que las tablas existen.</label></li>
+    <li><input type="checkbox" id="ck-15" data-ck="ck-15"><label for="ck-15">He cargado los datos de demostración y los veo guardados.</label></li>
+    <li><input type="checkbox" id="ck-16" data-ck="ck-16"><label for="ck-16">Sé pedir un cambio de esquema de base de datos con un prompt.</label></li>
+    <li><input type="checkbox" id="ck-17" data-ck="ck-17"><label for="ck-17">Sé usar <code>Restore Checkpoint</code> en Google AI Studio.</label></li>
+    <li><input type="checkbox" id="ck-18" data-ck="ck-18"><label for="ck-18">Entiendo cuándo necesito pasar al plan de pago.</label></li>
+  </ul>
+
+  <h2>Preguntas frecuentes (FAQ)</h2>
+
+  <details>
+    <summary>1. ¿Necesito saber programar en HTML, CSS o SQL para usar este tutorial?</summary>
+    <div class="details-body">
+      <p><strong>No.</strong> No necesitas ningún conocimiento previo de programación. Todas las estructuras, estilos
+      y tablas de la base de datos son creadas automáticamente por la IA a partir de las instrucciones escritas en español.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>2. ¿Qué diferencia hay entre Google AI Studio y Moca?</summary>
+    <div class="details-body">
+      <p>Google AI Studio crea prototipos visuales con datos simulados (JSON), mientras que Moca integra una
+      <strong>base de datos real</strong> donde la información ingresada se guarda de manera permanente.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>3. ¿Qué hago si la IA genera el panel en inglés?</summary>
+    <div class="details-body">
+      <p>Simplemente envía un prompt corto diciendo: <em>"Todo texto debe aparecer en español"</em>.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>4. ¿Qué hago si la IA comete un error y borra parte de mi aplicación?</summary>
+    <div class="details-body">
+      <p>En Google AI Studio, utiliza el botón <strong><code>Restore Checkpoint</code></strong> para volver inmediatamente
+      a la versión anterior que funcionaba bien.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>5. ¿Cuánto tarda todo el proceso?</summary>
+    <div class="details-body">
+      <p>El prototipo visual puede estar listo en minutos. La versión con base de datos real, autenticación y datos demo
+      suele quedar operativa en una sola sesión de trabajo. Lo que más tiempo consume es <em>afinar</em> la interfaz
+      con prompts de seguimiento.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>6. ¿Puedo usar el CRM en el móvil?</summary>
+    <div class="details-body">
+      <p>Sí. El Prompt Maestro incluye la instrucción <em>"Totalmente responsive"</em>, lo que obliga a la IA a adaptar
+      el diseño a pantallas de celulares, tablets y ordenadores.</p>
+    </div>
+  </details>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-errores">Siguiente: ERRORES →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: ERRORES
+============================================================ -->
+<section id="p-errores" class="panel" role="tabpanel" aria-label="Errores frecuentes">
+
+  <span class="badge" style="background:#ef4444;color:#fff;">Atención</span>
+  <h2>Errores Frecuentes y Cómo Corregirlos</h2>
+
+  <h3>Errores que nunca deben cometerse</h3>
+
+  <div class="card bad">
+    <h4>❌ 1. Escribir prompts imprecisos</h4>
+    <p>Decir <em>"haz una web de casas"</em> sin detallar pantallas, campos ni colores genera aplicaciones incompletas.</p>
+    <p><strong>Cómo corregirlo:</strong> usa siempre el Prompt Maestro de dos etapas (Diseño + Base de Datos) y nombra
+    cada pantalla, cada campo y cada color en hexadecimal.</p>
+  </div>
+
+  <div class="card bad">
+    <h4>❌ 2. Olvidar pedir persistencia</h4>
+    <p>No especificar <em>"todos los datos desde la base de datos (nada hardcodeado)"</em> provocará que la IA use
+    datos falsos que no se guardan.</p>
+    <p><strong>Cómo corregirlo:</strong> añade esa frase literal al final de tu prompt y verifica en la pestaña
+    <code>Data</code> que las tablas existen de verdad.</p>
+  </div>
+
+  <div class="card bad">
+    <h4>❌ 3. Agotar créditos en solicitudes vagas</h4>
+    <p>Hacer peticiones gigantescas sin medir los créditos de la plataforma te deja sin margen para las correcciones.</p>
+    <p><strong>Cómo corregirlo:</strong> itera por etapas. Primero el diseño básico, luego las funcionalidades avanzadas.
+    Y comprueba en la pestaña <code>Data</code> después de cada etapa.</p>
+  </div>
+
+  <div class="card bad">
+    <h4>❌ 4. Reiniciar desde cero ante un fallo</h4>
+    <p>Olvidar usar la herramienta <code>Restore Checkpoint</code> cuando la IA falla hace que pierdas todo el trabajo previo.</p>
+    <p><strong>Cómo corregirlo:</strong> ante cualquier destrozo visual, pulsa <b>Restore Checkpoint</b> y luego reformula
+    la instrucción de forma más concreta.</p>
+  </div>
+
+  <h2>Tabla de diagnóstico rápido</h2>
+  <table>
+    <thead>
+      <tr><th>Síntoma</th><th>Causa probable</th><th>Solución</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>El panel aparece en inglés</td>
+        <td>La IA usó el idioma por defecto del modelo</td>
+        <td>Envía el prompt: <em>"Todo texto debe aparecer en español"</em></td>
+      </tr>
+      <tr>
+        <td>Agrego una propiedad y no se guarda</td>
+        <td>Los créditos se agotaron antes de terminar la conexión backend, o el formulario no tiene validación completa</td>
+        <td>Revisa el saldo de créditos y pide a la IA que complete la validación del formulario</td>
+      </tr>
+      <tr>
+        <td>La IA borró una pantalla entera</td>
+        <td>Prompt demasiado amplio o ambiguo</td>
+        <td>Pulsa <code>Restore Checkpoint</code> y repite la petición acotando el alcance</td>
+      </tr>
+      <tr>
+        <td>Las tablas no aparecen en <code>Data</code></td>
+        <td>Faltó la instrucción de persistencia en el prompt</td>
+        <td>Añade: <em>"Todos los datos desde la base de datos (nada hardcodeado)"</em></td>
+      </tr>
+      <tr>
+        <td>Los datos desaparecen al cerrar la ventana</td>
+        <td>Estás en Google AI Studio, que usa JSON estático</td>
+        <td>Migra el proyecto a Moca para tener base de datos real</td>
+      </tr>
+      <tr>
+        <td>El diseño se ve mal en el móvil</td>
+        <td>Faltó la instrucción responsive</td>
+        <td>Verifica que el prompt incluya <em>"Totalmente responsive"</em></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note amber">
+    ⚠️ <strong>Recordatorio sobre créditos:</strong> las solicitudes que integran base de datos consumen más créditos.
+    Es normal quedarse en 0 tras el prompt inicial más los formularios CRUD. Planifica las iteraciones.
+  </div>
+
+  <div class="note red">
+    🚫 <strong>Nunca hagas esto:</strong> no pidas diez cambios distintos en un solo prompt. La IA perderá el foco,
+    consumirá muchos créditos y probablemente romperá algo. Un cambio, una comprobación, un checkpoint.
+  </div>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-resumen">Siguiente: RESUMEN →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: RESUMEN
+============================================================ -->
+<section id="p-resumen" class="panel" role="tabpanel" aria-label="Resumen y glosario">
+
+  <span class="badge blue">Cierre</span>
+  <h2>Resumen de Todo lo Aprendido</h2>
+
+  <ul>
+    <li>Aprendiste qué es un <strong>CRM Inmobiliario</strong> y cómo organiza el trabajo diario con las pantallas de Dashboard, Propiedades, Clientes y Calendario.</li>
+    <li>Comprendiste la diferencia fundamental entre <strong>datos estáticos (JSON)</strong> y una <strong>base de datos relacional real</strong>.</li>
+    <li>Diseñaste un <strong>Prompt Maestro profesional</strong> que incluye detalles de UI/UX, navegación y persistencia.</li>
+    <li>Construiste un panel CRM web funcional en <strong>Moca</strong> con base de datos, autenticación Google y carga automática de datos demo.</li>
+    <li>Aprendiste a prototipar en <strong>Google AI Studio</strong> y a proteger tu trabajo utilizando <strong>Restore Checkpoint</strong>.</li>
+  </ul>
+
+  <h2>Diagrama del flujo completo</h2>
+  <div class="flow">  IDEA
+   │
+   ▼
+[ Prompt Maestro ]  ──►  [ IA: Moca o Google AI Studio ]
+   │                              │
+   │                              ├──► Interfaz (Frontend): 4 pantallas
+   │                              ├──► Tablas (Backend): propiedades · clientes · citas · usuarios
+   │                              └──► Autenticación + datos demo
+   ▼
+[ Verificar en la pestaña "Data" ]
+   │
+   ▼
+[ Iterar con prompts de seguimiento ]  ──►  CRUD + modales
+   │
+   ├──► ¿Algo se rompió? ──► Restore Checkpoint ──► volver al estado bueno
+   │
+   ▼
+[ Publicar ]  ──► Plan Free (prototipo)  ó  Plan Pro (dominio propio, sin marca de agua)</div>
+
+  <h2>Lista de conceptos clave</h2>
+  <table>
+    <thead>
+      <tr><th>Concepto</th><th>Definición breve</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>CRM Inmobiliario</b></td><td>Sistema centralizado de gestión para inmobiliarias.</td></tr>
+      <tr><td><b>Prompt Generativo</b></td><td>Instrucción detallada dada a la IA para programar aplicaciones.</td></tr>
+      <tr><td><b>Base de Datos Relacional</b></td><td>Tablas estructuradas e interconectadas (propiedades, clientes, citas, usuarios).</td></tr>
+      <tr><td><b>CRUD</b></td><td>Siglas de Crear, Leer, Actualizar y Borrar registros en un sistema.</td></tr>
+      <tr><td><b>Datos Hardcodeados</b></td><td>Información fija escrita en el código sin persistencia permanente.</td></tr>
+      <tr><td><b>Restore Checkpoint</b></td><td>Botón de Google AI Studio para revertir errores de la IA.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Recomendaciones para seguir aprendiendo</h2>
+  <ol class="steps">
+    <li><strong>Itera por etapas.</strong><span class="why">Primero genera el diseño básico (Etapa 1) y luego añade funcionalidades avanzadas (Etapa 2).</span></li>
+    <li><strong>Explora componentes modales.</strong><span class="why">Pide a la IA que cree vistas en ventana emergente (modal) para agilizar la navegación de tus usuarios.</span></li>
+    <li><strong>Analiza siempre la pestaña <code>Data</code>.</strong><span class="why">Revisa el esquema de base de datos generado para asegurarte de que los campos coincidan con tu negocio.</span></li>
+    <li><strong>Guarda un checkpoint mental antes de cada cambio grande.</strong><span class="why">Si el cambio rompe algo, sabrás exactamente a qué versión volver.</span></li>
+  </ol>
+
+  <h2>Glosario de términos técnicos</h2>
+  <table>
+    <thead>
+      <tr><th>Término</th><th>Significado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Backend</b></td><td>Parte interna del software que gestiona la base de datos y la lógica del servidor.</td></tr>
+      <tr><td><b>Cards (Tarjetas)</b></td><td>Elementos de diseño visual rectangular utilizados para mostrar fotos, títulos y precios de inmuebles.</td></tr>
+      <tr><td><b>Checkpoints</b></td><td>Puntos de guardado automático que permiten regresar en el tiempo si el código falla.</td></tr>
+      <tr><td><b>Frontend</b></td><td>Interfaz gráfica del software, visible e interactiva para el usuario.</td></tr>
+      <tr><td><b>JSON</b></td><td>Formato ligero de intercambio de datos, utilizado en prototipos estáticos sin base de datos real.</td></tr>
+      <tr><td><b>No-Code / Low-Code</b></td><td>Desarrollo de software sin escribir líneas de código tradicionales, apoyándose en IA o herramientas visuales.</td></tr>
+      <tr><td><b>Responsive</b></td><td>Capacidad de un diseño web para adaptarse automáticamente a pantallas de celulares, tablets y ordenadores.</td></tr>
+      <tr><td><b>Prompt</b></td><td>Instrucción escrita que se le da a la IA para que genere el software.</td></tr>
+      <tr><td><b>CRUD</b></td><td>Crear, Leer, Actualizar y Borrar: las cuatro operaciones básicas sobre datos.</td></tr>
+      <tr><td><b>Persistencia</b></td><td>Capacidad de los datos de sobrevivir al cierre de la aplicación.</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-fuentes">Siguiente: FUENTES →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: FUENTES
+============================================================ -->
+<section id="p-fuentes" class="panel" role="tabpanel" aria-label="Fuentes y recursos">
+
+  <span class="badge">Recursos</span>
+  <h2>Fuentes y Recursos Utilizados</h2>
+
+  <div class="card accent">
+    <h4>1. Documento de Especificación</h4>
+    <p><strong>Título:</strong> <code>panel de CRM inmobiliario - RODRIGOOLIVARES.COM</code></p>
+    <p><strong>Contenido:</strong> Blueprint oficial, requerimientos de pantallas, colores corporativos
+    <code>#2563EB</code> y <code>#16A34A</code>, y diseño de la base de datos de 3 tablas.</p>
+  </div>
+
+  <div class="card accent">
+    <h4>2. Vídeo Tutorial de Referencia</h4>
+    <p><strong>Nombre del vídeo:</strong> Creé una App Web con Base de Datos en Minutos</p>
+    <p><strong>Canal de YouTube:</strong> Rodrigo Olivares - Crea con IA</p>
+    <p><strong>Enlace:</strong>
+      <a href="https://youtube.com/watch?v=5TXGezOAn3M&amp;is=_5aTKJSGEMYj8a3W" target="_blank" rel="noopener noreferrer">
+        https://youtube.com/watch?v=5TXGezOAn3M&amp;is=_5aTKJSGEMYj8a3W
+      </a>
+    </p>
+  </div>
+
+  <div class="card">
+    <h4>3. Material base del tutorial</h4>
+    <p>El contenido de este tutorial se ha elaborado a partir del documento
+    <code>-CMO-CREAR-UN-PANE.txt</code>, reorganizado y ampliado con explicaciones paso a paso,
+    ejemplos correctos e incorrectos, tabla de diagnóstico de errores, ejercicios con solución y glosario.</p>
+  </div>
+
+  <div class="note">
+    ℹ️ <strong>Nota:</strong> las plataformas de IA mencionadas (Moca, Google AI Studio) evolucionan con rapidez.
+    Los importes de créditos, los nombres de los botones y las capacidades pueden cambiar. Verifica siempre
+    la información directamente en la web oficial de cada plataforma antes de tomar decisiones de compra.
+  </div>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-prompts">Siguiente: PROMPTS →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: PROMPTS
+============================================================ -->
+<section id="p-prompts" class="panel" role="tabpanel" aria-label="Prompts del proyecto">
+
+  <span class="badge blue">Recursos copiables</span>
+  <h2>Todos los Prompts del Proyecto</h2>
+
+  <div class="promptIntro">
+    <p>
+      Aquí tienes todos los <strong>prompts</strong> empleados a lo largo del tutorial, listos para copiar y pegar
+      en tu plataforma de IA (<strong>Moca</strong> o <strong>Google AI Studio</strong>). Cada prompt incluye su
+      <em>descripción</em>, una indicación de <em>cuándo usarlo</em> y un botón <b>COPIAR</b> que funciona en
+      cualquier navegador, incluso abriendo este archivo como <code>file://</code>.
+    </p>
+    <p style="margin:0;">
+      El texto se conserva <strong>exactamente igual</strong> al original, sin resumir ni modificar.
+    </p>
+  </div>
+
+  <h3>Índice de Prompts</h3>
+  <ul class="promptIndex">
+    <li><a href="#pr-1">Arquitectura, Diseño y Estructura Inicial del CRM</a></li>
+    <li><a href="#pr-2">Traducción y Localización de la Interfaz al Español</a></li>
+    <li><a href="#pr-3">Completado y Navegabilidad de Formularios</a></li>
+    <li><a href="#pr-4">Persistencia y Funcionalidad CRUD en Base de Datos</a></li>
+  </ul>
+
+  <!-- ============ PROMPT 1 ============ -->
+  <div class="promptBox" id="pr-1">
+    <span class="promptNum">PROMPT 1</span>
+    <h3>Arquitectura, Diseño y Estructura Inicial del CRM Inmobiliario</h3>
+
+    <p class="promptMeta">
+      <b>Descripción:</b> prompt maestro que define en una sola instrucción los cimientos del sistema:
+      distribución visual (UI), navegación (UX), paleta de colores corporativos con códigos hexadecimales
+      exactos, las cuatro pantallas principales (Dashboard, Propiedades, Clientes y Calendario) y la
+      estructura de tablas relacionales.
+    </p>
+    <p class="promptMeta">
+      <b>Uso:</b> úsalo al <strong>inicio del proyecto</strong> como primera interacción con la IA (Moca o
+      Google AI Studio). Su instrucción de <em>"nada hardcodeado"</em> obliga a la herramienta a desacoplar la
+      interfaz del contenido y generar tablas reales de base de datos.
+    </p>
+
+    <pre class="promptBody">Crea una aplicación web para un panel de CRM inmobiliario. La aplicación debe ser visualmente atractiva, moderna y con diseño de alta calidad.
+
+PRIMERA ETAPA - DISEÑO Y NAVEGABILIDAD
+
+Pantallas esenciales:
+
+1. Dashboard Simple
+- Contador de propiedades activas
+- Contador de clientes
+- Lista de citas de hoy
+- Acceso rápido a agregar propiedad/cliente
+
+2. Propiedades
+- Listado en cards con foto, precio y ubicación
+- Formulario para agregar propiedad (campos básicos: título, precio, ubicación, fotos, descripción)
+- Vista detalle con galería y datos básicos
+
+3. Clientes
+- Tabla simple con nombre, teléfono, email
+- Formulario para agregar cliente
+- Vista de detalle con notas
+
+4. Calendario
+- Vista mensual de citas
+- Modal para crear cita vinculando cliente y propiedad
+
+Diseño:
+- Navegación lateral simple con 4 opciones e iconos profesionales
+- Colores: fondo blanco, azul primario (#2563EB), gris para textos (#64748B), verde (#16A34A) para acciones positivas y estados de éxito
+- Totalmente responsive
+
+BASE DE DATOS
+- 3 tablas básicas: propiedades, clientes, citas
+- Autenticación simple email/password
+- CRUD básico
+- Subida de imágenes
+
+Datos de demostración:
+- Generar set completo de datos demo
+- Todos los datos desde la base de datos (nada hardcodeado)</pre>
+
+    <button class="copyBtn" type="button">COPIAR</button>
+  </div>
+
+  <!-- ============ PROMPT 2 ============ -->
+  <div class="promptBox" id="pr-2">
+    <span class="promptNum">PROMPT 2</span>
+    <h3>Traducción y Localización de la Interfaz al Español</h3>
+
+    <p class="promptMeta">
+      <b>Descripción:</b> prompt corto de localización que corrige el idioma de la aplicación cuando los
+      modelos de lenguaje generan por defecto etiquetas, encabezados, botones o elementos del menú en inglés
+      durante la maquetación inicial.
+    </p>
+    <p class="promptMeta">
+      <b>Uso:</b> úsalo como <strong>iteración</strong> después del Prompt 1, si observas términos como
+      <em>"Properties"</em>, <em>"Customers"</em> o <em>"Add New"</em>. Se envía en el mismo hilo de chat sin
+      necesidad de rehacer el proyecto.
+    </p>
+
+    <pre class="promptBody">todo texto debe aparecer en español</pre>
+
+    <button class="copyBtn" type="button">COPIAR</button>
+  </div>
+
+  <!-- ============ PROMPT 3 ============ -->
+  <div class="promptBox" id="pr-3">
+    <span class="promptNum">PROMPT 3</span>
+    <h3>Completado y Navegabilidad de Formularios (Prototipado UI)</h3>
+
+    <p class="promptMeta">
+      <b>Descripción:</b> prompt de <strong>maquetación detallada e interconectividad visual</strong>. En
+      prototipos iniciales la IA suele generar botones de <em>"Agregar propiedad"</em> o <em>"Nuevo cliente"</em>
+      sin crear los modales completos ni conectar sus eventos de apertura. Este prompt obliga al modelo a
+      desarrollar la totalidad de los componentes de entrada de datos para que la experiencia de usuario sea
+      totalmente funcional a nivel de prototipo navegable.
+    </p>
+    <p class="promptMeta">
+      <b>Uso:</b> envíalo cuando, al hacer clic en los botones de acción rápida, no se desplieguen las ventanas
+      flotantes o los formularios estén a medias. Se aplica igual en Google AI Studio y en Moca.
+    </p>
+
+    <pre class="promptBody">los formularios de añadir propiedad cliente todos los tipos (cita etcétera) completa el diseño que se vean terminados y que sean navegables</pre>
+
+    <button class="copyBtn" type="button">COPIAR</button>
+  </div>
+
+  <!-- ============ PROMPT 4 ============ -->
+  <div class="promptBox" id="pr-4">
+    <span class="promptNum">PROMPT 4</span>
+    <h3>Persistencia y Funcionalidad CRUD en Base de Datos</h3>
+
+    <p class="promptMeta">
+      <b>Descripción:</b> prompt que convierte un prototipo estático en una <strong>aplicación dinámicamente
+      funcional con operaciones CRUD</strong> (Crear, Leer, Actualizar y Eliminar). Ordena a la IA crear las
+      rutinas de conexión entre los formularios del frontend y la base de datos real, permitiendo enviar datos
+      mediante peticiones de inserción, validar campos obligatorios (por ejemplo, formato de correo electrónico)
+      e insertar nuevos registros dinámicamente en las tablas.
+    </p>
+    <p class="promptMeta">
+      <b>Uso:</b> envíalo cuando ya tengas el esqueleto del CRM generado y quieras activar la escritura y
+      edición de datos. Requiere estar en una plataforma con soporte de base de datos real (como Moca). Tras
+      ejecutarlo, verifica en la pestaña <code>Data</code> que los registros se insertan correctamente.
+    </p>
+
+    <p class="promptVariantLabel">Versión breve:</p>
+    <pre class="promptBody">permitir crear y editar propiedades y clientes</pre>
+
+    <p class="promptVariantLabel">Variante extendida (con modales integrados):</p>
+    <pre class="promptBody">implementar los formularios para crear editar propiedades y clientes crearía componentes modales elegantes que se integren perfectamente con el diseño actual y permitan gestionar toda la información de manera intuitiva</pre>
+
+    <button class="copyBtn" type="button">COPIAR</button>
+  </div>
+
+  <div class="note green">
+    ✅ <strong>Consejo:</strong> todos los botones <b>COPIAR</b> de este tutorial (incluidos los de la pestaña
+    <b>PROCEDIMIENTO</b>) copian únicamente el texto del prompt correspondiente. En caso de que el navegador
+    bloquee el portapapeles, el botón seleccionará automáticamente el texto para que puedas pulsar
+    <span class="kbd">Ctrl</span>+<span class="kbd">C</span> (o <span class="kbd">Cmd</span>+<span class="kbd">C</span> en Mac).
+  </div>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline" type="button" data-goto="p-creditos">Ver CRÉDITOS →</button>
+  </p>
+
+</section>
+
+<!-- ============================================================
+     PANEL: CRÉDITOS
+============================================================ -->
+<section id="p-creditos" class="panel" role="tabpanel" aria-label="Créditos">
+
+  <h2>CRÉDITOS</h2>
+
+  <!-- SVG ARRIBA DEL TODO, antes de cualquier otro bloque -->
+  <div class="hero-svg-mount" data-svg-hero="true" role="img"
+       aria-label="Animación: una base de datos envía registros a un panel CRM inmobiliario con tarjetas, gráficos y listas."></div>
+  <p class="svg-caption">
+    De la base de datos al panel: el mismo dibujo que abre el tutorial, ahora como cierre del recorrido.
+  </p>
+
+  <div class="credit-card">
+    <p class="credit-name">Rubén Sbarsky</p>
+    <p class="credit-role">Autor del tutorial</p>
+
+    <div class="meta-row">
+      <span><b>Fecha de creación:</b> 02/10/2026</span>
+      <span><b>Hora:</b> 09:14:27</span>
+    </div>
+    <div class="meta-row">
+      <span><b>Versión del archivo:</b> V001</span>
+      <span><b>Idioma:</b> Español</span>
+    </div>
+    <div class="meta-row">
+      <span><b>Formato:</b> HTML único, sin dependencias externas</span>
+    </div>
+  </div>
+
+  <h3>Sobre este tutorial</h3>
+  <p>
+    Este archivo es un tutorial interactivo autocontenido. Incluye HTML, CSS, JavaScript y SVG en un solo documento
+    que funciona abriéndolo directamente en el navegador, incluso sin conexión a Internet.
+  </p>
+  <ul>
+    <li>Contenido pedagógico basado en el documento fuente <code>-CMO-CREAR-UN-PANE.txt</code>.</li>
+    <li>Estructura por pestañas: Inicio, Conceptos, Procedimiento, Práctica, Errores, Resumen, Fuentes, Prompts y Créditos.</li>
+    <li>Gráfico animado construido íntegramente con SVG y SMIL, sin librerías externas.</li>
+  </ul>
+
+  <h3>Novedades de esta versión</h3>
+  <ul>
+    <li><b>V001</b> — Primera versión completa del tutorial HTML interactivo.</li>
+    <li>Gráfico SVG animado compartido entre INICIO y CRÉDITOS, generado desde una única plantilla.</li>
+    <li>Hoja de impresión optimizada para generar un PDF legible con todas las pestañas.</li>
+    <li>Progreso de lectura y checklists guardados en el navegador.</li>
+    <li>Nueva pestaña <b>PROMPTS</b> con todos los prompts del proyecto, índice navegable y botones de copia robustos (compatibles con <code>file://</code>, iframes, móviles y permisos denegados).</li>
+  </ul>
+
+  <h3>Licencia y uso</h3>
+  <p>
+    Material educativo de libre uso para formación personal y profesional. Las marcas, plataformas y servicios
+    mencionados (Moca, Google AI Studio, Gemini) pertenecen a sus respectivos propietarios.
+  </p>
+
+  <p style="margin-top:24px;">
+    <button class="btn-inline ghost" type="button" data-goto="p-inicio">Volver al INICIO ↑</button>
+  </p>
+
+</section>
+
+</main>
+
+<button id="toTop" class="to-top" type="button" title="Volver arriba" aria-label="Volver arriba">↑</button>
+<div id="printNotice" hidden role="alert"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================================
+     0. UTILIDADES
+  ===================================================================== */
+  var $  = function (s, c) { return (c || document).querySelector(s); };
+  var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+  var inIframe = (function () {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  })();
+
+  /* =====================================================================
+     1. PESTAÑAS
+  ===================================================================== */
+  var tabs   = $$('.tab');
+  var panels = $$('.panel');
+
+  function activateTab(id, doScroll) {
+    var target = document.getElementById(id);
+    if (!target || !target.classList.contains('panel')) return;
+
+    panels.forEach(function (p) { p.classList.toggle('active', p === target); });
+    tabs.forEach(function (t) {
+      var on = t.getAttribute('data-tab') === id;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+
+    try { localStorage.setItem('crm_tab', id); } catch (e) {}
+
+    if (doScroll) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    mountActive();
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      activateTab(t.getAttribute('data-tab'), true);
+    });
+  });
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-goto]') : null;
+    if (b) {
+      ev.preventDefault();
+      activateTab(b.getAttribute('data-goto'), true);
+    }
+  });
+
+  /* =====================================================================
+     2. BÚSQUEDA EN LA PESTAÑA ACTIVA
+  ===================================================================== */
+  var searchInput = $('#searchInput');
+  var searchInfo  = $('#searchInfo');
+
+  function clearHl(root) {
+    $$('mark.search-hl', root).forEach(function (m) {
+      var p = m.parentNode;
+      if (!p) return;
+      p.replaceChild(document.createTextNode(m.textContent), m);
+      p.normalize();
+    });
+  }
+
+  function escapeRx(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function doSearch(q) {
+    var panel = $('.panel.active');
+    if (!panel) return;
+    clearHl(panel);
+
+    q = (q || '').trim();
+    if (q.length < 2) {
+      searchInfo.textContent = '';
+      return;
+    }
+
+    var walker = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        var tag = n.parentNode ? n.parentNode.nodeName : '';
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    var nodes = [], n;
+    while ((n = walker.nextNode())) { nodes.push(n); }
+
+    var rx = new RegExp(escapeRx(q), 'gi');
+    var count = 0;
+
+    nodes.forEach(function (node) {
+      var text = node.nodeValue;
+      rx.lastIndex = 0;
+      if (!rx.test(text)) return;
+      rx.lastIndex = 0;
+
+      var frag = document.createDocumentFragment();
+      var last = 0, m;
+      while ((m = rx.exec(text)) !== null) {
+        if (m[0].length === 0) { rx.lastIndex++; continue; }
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var mk = document.createElement('mark');
+        mk.className = 'search-hl';
+        mk.textContent = m[0];
+        frag.appendChild(mk);
+        last = m.index + m[0].length;
+        count++;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      if (node.parentNode) node.parentNode.replaceChild(frag, node);
+    });
+
+    if (count > 0) {
+      searchInfo.textContent = count + ' coincidencia' + (count === 1 ? '' : 's') + ' para "' + q + '" en esta pestaña.';
+      var first = $('mark.search-hl', panel);
+      if (first && first.scrollIntoView) {
+        first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+      searchInfo.textContent = 'Sin coincidencias para "' + q + '" en esta pestaña. Prueba en otra pestaña.';
+    }
+  }
+
+  var searchTimer = null;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    var v = searchInput.value;
+    searchTimer = setTimeout(function () { doSearch(v); }, 260);
+  });
+
+  /* =====================================================================
+     3. TAMAÑO DE TEXTO
+  ===================================================================== */
+  var fontStep = 0;
+  var FONT_MIN = -3, FONT_MAX = 5;
+
+  function applyFont() {
+    document.documentElement.style.fontSize = (16 + fontStep * 1.5) + 'px';
+    try { localStorage.setItem('crm_font', String(fontStep)); } catch (e) {}
+  }
+
+  $('#btnFontMinus').addEventListener('click', function () {
+    if (fontStep > FONT_MIN) { fontStep--; applyFont(); }
+  });
+  $('#btnFontPlus').addEventListener('click', function () {
+    if (fontStep < FONT_MAX) { fontStep++; applyFont(); }
+  });
+
+  try {
+    var sf = localStorage.getItem('crm_font');
+    if (sf !== null) { fontStep = parseInt(sf, 10) || 0; }
+  } catch (e) {}
+  applyFont();
+
+  /* =====================================================================
+     4. MODO CLARO / OSCURO
+  ===================================================================== */
+  var btnTheme = $('#btnTheme');
+
+  function applyTheme(mode) {
+    document.body.classList.toggle('light', mode === 'light');
+    btnTheme.textContent = (mode === 'light') ? '☀️' : '🌙';
+    btnTheme.setAttribute('title', mode === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro');
+    try { localStorage.setItem('crm_theme', mode); } catch (e) {}
+  }
+
+  btnTheme.addEventListener('click', function () {
+    applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+  });
+
+  var savedTheme = 'dark';
+  try { savedTheme = localStorage.getItem('crm_theme') || 'dark'; } catch (e) {}
+  applyTheme(savedTheme);
+
+  /* =====================================================================
+     5. BARRA DE PROGRESO + VOLVER ARRIBA
+  ===================================================================== */
+  var progressBar = $('#progressBar');
+  var toTop = $('#toTop');
+
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    var pct = max > 0 ? (h.scrollTop || document.body.scrollTop) / max * 100 : 0;
+    progressBar.style.width = pct.toFixed(2) + '%';
+    toTop.classList.toggle('show', (window.pageYOffset || h.scrollTop) > 420);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  toTop.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* =====================================================================
+     6. CHECKLISTS CON LOCALSTORAGE
+  ===================================================================== */
+  var boxes = $$('input[type=checkbox][data-ck]');
+  var ckProgress = $('#ckProgress');
+
+  function updateCkProgress() {
+    if (!ckProgress) return;
+    var total = boxes.length;
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    ckProgress.textContent = 'Progreso: ' + done + ' de ' + total;
+  }
+
+  boxes.forEach(function (cb) {
+    var key = 'crm_ck_' + cb.getAttribute('data-ck');
+    try { if (localStorage.getItem(key) === '1') cb.checked = true; } catch (e) {}
+    cb.addEventListener('change', function () {
+      try { localStorage.setItem(key, cb.checked ? '1' : '0'); } catch (e) {}
+      updateCkProgress();
+    });
+  });
+  updateCkProgress();
+
+  /* =====================================================================
+     7. PORTAPAPELES — IMPLEMENTACIÓN ROBUSTA (reemplaza la anterior)
+  ===================================================================== */
+
+  /* Copia mediante el textarea auxiliar clásico. No usa display:none ni opacity:0,
+     mantiene el textarea visible en pantalla y hace setSelectionRange para iOS. */
+  function legacyCopy(text) {
+    return new Promise(function (resolve, reject) {
+      var ta = null;
+      var prevActive = null;
+      try {
+        prevActive = document.activeElement;
+
+        ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.setAttribute('aria-hidden', 'true');
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '-9999px';
+        ta.style.width = '2em';
+        ta.style.height = '2em';
+        ta.style.padding = '0';
+        ta.style.border = 'none';
+        ta.style.outline = 'none';
+        ta.style.boxShadow = 'none';
+        ta.style.background = 'transparent';
+
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { ta.setSelectionRange(0, ta.value.length); } catch (_e) {}
+
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ta = null;
+
+        if (prevActive && typeof prevActive.focus === 'function') {
+          try { prevActive.focus(); } catch (_e) {}
+        }
+
+        ok ? resolve() : reject(new Error('execCommand("copy") devolvió false'));
+      } catch (err) {
+        if (ta && ta.parentNode) { try { ta.parentNode.removeChild(ta); } catch (_e) {} }
+        reject(err);
+      }
+    });
+  }
+
+  /* Intenta primero el API moderno. Si falla o no es contexto seguro, cae al legacy. */
+  function copyText(text) {
+    if (navigator.clipboard
+       && window.isSecureContext
+       && typeof navigator.clipboard.writeText === 'function') {
+      return navigator.clipboard.writeText(text).catch(function () {
+        return legacyCopy(text);
+      });
+    }
+    return legacyCopy(text);
+  }
+
+  /* Devuelve el elemento que contiene el texto a copiar para un botón dado.
+     Compatible con:
+       - .promptBox  → .promptBody  (nueva pestaña PROMPTS y bloques de PROCEDIMIENTO)
+       - .copy-wrap  → data-copy    (bloques antiguos de PRÁCTICA y PROCEDIMIENTO)  */
+  function getPromptBody(btn) {
+    var box = btn.closest ? btn.closest('.promptBox') : null;
+    if (box) {
+      var body = box.querySelector('.promptBody');
+      if (body) return body;
+    }
+    var id = btn.getAttribute('data-copy');
+    if (id) return document.getElementById(id);
+    return null;
+  }
+
+  /* Un único manejador para TODOS los botones .copyBtn del documento. */
+  $$('.copyBtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var body = getPromptBody(btn);
+      if (!body) return;
+
+      copyText(body.textContent).then(function () {
+        var original = btn.textContent;
+        btn.textContent = '✓ COPIADO';
+        btn.classList.add('done');
+        btn.classList.add('ok');
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove('done');
+          btn.classList.remove('ok');
+        }, 1800);
+      }).catch(function () {
+        try {
+          var range = document.createRange();
+          range.selectNodeContents(body);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (e) {}
+        var original = btn.textContent;
+        btn.textContent = 'SELECCIONA Y COPIA';
+        setTimeout(function () { btn.textContent = original; }, 2200);
+      });
+    });
+  });
+
+  /* =====================================================================
+     8. SVG ANIMADO — PLANTILLA ÚNICA + MONTAJE CON innerHTML
+  ===================================================================== */
+  var seq = 0;
+  var TPL = null;
+  var imgMode = false;
+  var IDS = ['gBg', 'gAcc', 'fGlow'];
+
+  function template() {
+    if (TPL) return TPL;
+    var src = document.getElementById('svgHeroSource');
+    if (!src) return null;
+
+    var defsEl = src.querySelector('defs');
+    var artEl = src.querySelector('#svgHero');
+    if (!defsEl || !artEl) return null;
+
+    var d = defsEl.cloneNode(true);
+    var g = artEl.cloneNode(true);
+
+    var inner = d.querySelector('#svgHero');
+    if (inner && inner.parentNode) { inner.parentNode.removeChild(inner); }
+
+    g.removeAttribute('id');
+
+    TPL = { defs: d.innerHTML, art: g.outerHTML };
+
+    if (src.parentNode) { src.parentNode.removeChild(src); }
+    return TPL;
+  }
+
+  function markup(uid) {
+    var t = template();
+    if (!t) return '';
+    var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 260" '
+          + 'preserveAspectRatio="xMidYMid meet" role="img" aria-hidden="true">'
+          + '<defs>' + t.defs + '</defs>' + t.art + '</svg>';
+    IDS.forEach(function (id) {
+      s = s.split('id="' + id + '"').join('id="' + id + '-' + uid + '"')
+           .split('url(#' + id + ')').join('url(#' + id + '-' + uid + ')');
+    });
+    return s;
+  }
+
+  function mountOne(m) {
+    if (!m) return;
+    m.textContent = '';
+
+    if (imgMode) {
+      var im = new Image();
+      im.alt = '';
+      im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup('i' + (++seq)));
+      m.appendChild(im);
+      return;
+    }
+
+    m.innerHTML = markup('h' + (++seq));
+
+    var svg = m.querySelector('svg');
+    if (!svg) return;
+
+    try {
+      svg.setCurrentTime(0);
+      svg.unpauseAnimations();
+    } catch (e) {}
+
+    var t0 = 0;
+    try { t0 = svg.getCurrentTime(); } catch (e) { return; }
+
+    setTimeout(function () {
+      if (document.hidden) return;
+      if (m.querySelector('svg') !== svg) return;
+      var box = svg.getBoundingClientRect();
+      if (box.height > 0 && (svg.getCurrentTime() - t0) < 0.3) {
+        imgMode = true;
+        mountOne(m);
+      }
+    }, 1600);
+  }
+
+  function mountActive() {
+    $$('.panel.active [data-svg-hero]').forEach(mountOne);
+  }
+
+  function mountAll() {
+    $$('[data-svg-hero]').forEach(mountOne);
+  }
+
+  function freezeAll() {
+    $$('[data-svg-hero] svg').forEach(function (sv) {
+      try {
+        sv.pauseAnimations();
+        sv.setCurrentTime(1.2);
+      } catch (e) {}
+    });
+  }
+
+  function thawAll() {
+    $$('[data-svg-hero] svg').forEach(function (sv) {
+      try { sv.unpauseAnimations(); } catch (e) {}
+    });
+  }
+
+  /* Red de seguridad: si el panel visible tiene el contenedor vacío, remontar. */
+  setInterval(function () {
+    if (document.hidden) return;
+    $$('.panel.active [data-svg-hero]').forEach(function (m) {
+      if (!m.firstElementChild) { mountOne(m); }
+    });
+  }, 800);
+
+  /* =====================================================================
+     9. IMPRIMIR / GUARDAR COMO PDF
+  ===================================================================== */
+  var closedDetails = [];
+  var printNotice = $('#printNotice');
+
+  function showPrintNotice() {
+    if (!printNotice) return;
+    printNotice.textContent = 'Si no se abre el diálogo de impresión: abre este archivo directamente en el navegador (no dentro de un visor) y pulsa Ctrl+P / Cmd+P.';
+    printNotice.hidden = false;
+    setTimeout(function () { printNotice.hidden = true; }, 9000);
+  }
+
+  function beforePrint() {
+    closedDetails = [];
+    $$('details').forEach(function (d) {
+      if (!d.open) { closedDetails.push(d); d.open = true; }
+    });
+
+    var active = $('.panel.active');
+    if (active) { clearHl(active); }
+
+    mountAll();
+    freezeAll();
+  }
+
+  function afterPrint() {
+    closedDetails.forEach(function (d) {
+      if (d && d.isConnected) d.open = false;
+    });
+    closedDetails = [];
+    thawAll();
+  }
+
+  window.addEventListener('beforeprint', beforePrint);
+  window.addEventListener('afterprint', afterPrint);
+
+  $('#btnPrint').addEventListener('click', function () {
+    if (inIframe) { showPrintNotice(); }
+    beforePrint();
+    try {
+      window.print();
+    } catch (e) {
+      showPrintNotice();
+    }
+  });
+
+  /* =====================================================================
+     10. ARRANQUE
+  ===================================================================== */
+  var initial = 'p-inicio';
+
+  var hashId = (location.hash || '').replace('#', '');
+  var hashPanel = hashId ? document.getElementById(hashId) : null;
+
+  if (hashPanel && hashPanel.classList.contains('panel')) {
+    initial = hashId;
+  } else {
+    try {
+      var saved = localStorage.getItem('crm_tab');
+      var savedPanel = saved ? document.getElementById(saved) : null;
+      if (savedPanel && savedPanel.classList.contains('panel')) { initial = saved; }
+    } catch (e) {}
+  }
+
+  activateTab(initial, false);
+
+  /* Si el hash cambia después de cargar (enlace interno), activar la pestaña. */
+  window.addEventListener('hashchange', function () {
+    var id = (location.hash || '').replace('#', '');
+    var p = id ? document.getElementById(id) : null;
+    if (p && p.classList.contains('panel')) { activateTab(id, false); }
+  });
+
+})();
+</script>
+
+</body>
+</html>
